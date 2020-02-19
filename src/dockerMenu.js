@@ -24,7 +24,8 @@ var DockerMenu = GObject.registerClass(
       const dockerIcon = new St.Icon({ gicon: gicon, icon_size: "24" });
       
       this.buttonText = new St.Label({
-        text: _("Loading...")
+        text: _("Loading..."),
+        style: 'margin-top:4px;'
       });
 
       hbox.add_child(dockerIcon);
