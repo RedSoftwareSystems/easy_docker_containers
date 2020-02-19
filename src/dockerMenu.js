@@ -7,9 +7,9 @@ const panelMenu = imports.ui.panelMenu;
 const { arrowIcon, PopupMenuItem } = imports.ui.popupMenu;
 const extensionUtils = imports.misc.extensionUtils;
 const Lang = imports.lang;
+const Mainloop = imports.mainloop;
 const Me = extensionUtils.getCurrentExtension();
 const Docker = Me.imports.src.docker;
-const Mainloop = imports.mainloop;
 const { DockerSubMenu } = Me.imports.src.dockerSubMenuMenuItem;
 const GObject = imports.gi.GObject;
 
