@@ -108,4 +108,3 @@ var DockerMenu = GObject.registerClass(
     }
   }
 );
-`
