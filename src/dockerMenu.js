@@ -15,7 +15,6 @@ const Lang = imports.lang;
 // Docker icon as panel menu
 var DockerMenu = GObject.registerClass(
   class DockerMenu extends panelMenu.Button {
-    _containers = [];
     _init(menuAlignment, nameText) {
       super._init(menuAlignment, nameText);
 
