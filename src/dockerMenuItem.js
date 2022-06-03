@@ -23,7 +23,8 @@ var DockerMenuItem = GObject.registerClass(
     _dockerAction(containerName, dockerCommand) {
       Docker.runCommand(dockerCommand, containerName, (ok, command, err) => {
         if (ok) {
-          Main.notify("Command `" + command + "` successful");
+          // Show gnome Menu
+          // Main.notify("Command `" + command + "` successful");
         } else {
           let errMsg = _("Error occurred when running `" + command + "`");
           Main.notifyError(errMsg);

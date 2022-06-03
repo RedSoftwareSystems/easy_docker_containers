@@ -1,8 +1,8 @@
 {
-  "name": "Easy Docker Containers",
-  "uuid": "easy_docker_containers@red.software.systems",
+  "name": "Gnome Docker Containers",
+  "uuid": "gnome_docker_containers@semenov.anton.a.gmail.com",
   "description": "A GNOME Shell extension (GNOME Panel applet) to be able to generally control your available Docker containers.",
-  "url": "https://github.com/RedSoftwareSystems/easy_docker_containers",
+  "url": "https://github.com/semenov-anton-a/gnome_docker_containers",
   "version": 17,
-  "shell-version": ["3.34", "3.36", "3.38", "40", "41", "42"]
+  "shell-version": [ "3.34", "3.36", "3.38", "40", "41", "42" ]
 }

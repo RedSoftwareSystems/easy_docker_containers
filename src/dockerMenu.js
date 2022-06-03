@@ -44,16 +44,16 @@ var DockerMenu = GObject.registerClass(
       const dockerIcon = new St.Icon({
         gicon: gicon,
         style_class: "system-status-icon",
-        icon_size: "16",
+        icon_size: "18",
       });
       const loading = _("Loading...");
       this.buttonText = new St.Label({
         text: loading,
-        style: "margin-top:4px;",
+        style: "margin-top:6px;",
       });
 
       hbox.add_child(dockerIcon);
-      hbox.add_child(arrowIcon(St.Side.BOTTOM));
+      // hbox.add_child(arrowIcon(St.Side.BOTTOM));
       hbox.add_child(this.buttonText);
       this.add_child(hbox);
       this.menu.connect("open-state-changed", this._refreshMenu.bind(this));
