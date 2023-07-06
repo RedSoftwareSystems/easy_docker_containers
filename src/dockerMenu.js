@@ -2,6 +2,7 @@
 
 const St = imports.gi.St;
 const Gio = imports.gi.Gio; // For custom icons
+const Lang = imports.lang;
 const panelMenu = imports.ui.panelMenu;
 const { arrowIcon, PopupMenuItem } = imports.ui.popupMenu;
 const extensionUtils = imports.misc.extensionUtils;
@@ -10,6 +11,7 @@ const Docker = Me.imports.src.docker;
 const { DockerSubMenu } = Me.imports.src.dockerSubMenuMenuItem;
 const GObject = imports.gi.GObject;
 const { GLib } = imports.gi;
+const { menuIcon } = Me.imports.src.menuIcon
 
 const isContainerUp = (container) => container.status.indexOf("Up") > -1;
 
@@ -187,16 +189,37 @@ var DockerMenu = GObject.registerClass(
       ) {
         this.menu.removeAll();
         this._containers = dockerContainers;
-        this._containers.forEach((container) => {
-          const subMenu = new DockerSubMenu(
-            container.project,
-            container.name,
-            container.status
-          );
-          this.menu.addMenuItem(subMenu);
-        });
         if (!this._containers.length) {
           this.menu.addMenuItem(new PopupMenuItem("No containers detected"));
+        }
+        else {
+          const startAllMenuItem = new PopupMenuItem("Start all containers")
+          startAllMenuItem.insert_child_at_index(menuIcon("docker-container-start-symbolic"), 1);
+          startAllMenuItem.connect('activate', Lang.bind(this, function(){
+            this._containers.forEach((container) => {
+              Docker.runCommand("start", container.name, () => Main.notify("All containers started"))
+            });
+          }));
+          this.menu.addMenuItem(startAllMenuItem)
+
+          const stopAllMenuItem = new PopupMenuItem("Stop all containers")
+          stopAllMenuItem.insert_child_at_index(menuIcon("docker-container-stop-symbolic"), 1);
+          stopAllMenuItem.connect('activate', Lang.bind(this, function(){
+            this._containers.forEach((container) => {
+              Docker.runCommand("stop", container.name, () => Main.notify("All containers stopped"))
+            });
+          }));
+          this.menu.addMenuItem(stopAllMenuItem)
+
+
+          this._containers.forEach((container) => {
+            const subMenu = new DockerSubMenu(
+              container.project,
+              container.name,
+              container.status
+            );
+            this.menu.addMenuItem(subMenu);
+          });
         }
       }
     }
