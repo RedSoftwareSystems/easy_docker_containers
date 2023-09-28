@@ -7,26 +7,7 @@ const extensionUtils = imports.misc.extensionUtils;
 const Me = extensionUtils.getCurrentExtension();
 const { DockerMenuItem } = Me.imports.src.dockerMenuItem;
 const GObject = imports.gi.GObject;
-
-/**
- * Create Gio.icon based St.Icon
- *
- * @param {String} name The name of the icon (filename without extension)
- * @param {String} styleClass The style of the icon
- *
- * @return {Object} an St.Icon instance
- */
-const gioIcon = (name = "docker-container-unavailable-symbolic") =>
-  Gio.icon_new_for_string(Me.path + "/icons/" + name + ".svg");
-const menuIcon = (
-  name = "docker-container-unavailable-symbolic",
-  styleClass = "system-status-icon"
-) =>
-  new St.Icon({
-    gicon: gioIcon(name),
-    style_class: styleClass,
-    icon_size: "16",
-  });
+const { menuIcon } = Me.imports.src.menuIcon
 
 /**
  * Get the status of a container from the status message obtained with the docker command
