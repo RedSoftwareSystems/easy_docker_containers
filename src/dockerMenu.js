@@ -52,7 +52,6 @@ var DockerMenu = GObject.registerClass(
       });
 
       hbox.add_child(dockerIcon);
-      hbox.add_child(arrowIcon(St.Side.BOTTOM));
       hbox.add_child(this.buttonText);
       this.add_child(hbox);
       this.menu.connect("open-state-changed", this._refreshMenu.bind(this));
