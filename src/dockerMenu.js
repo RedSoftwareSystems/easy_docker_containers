@@ -1,21 +1,21 @@
 "use strict";
 
-const St = imports.gi.St;
-const Gio = imports.gi.Gio; // For custom icons
-const panelMenu = imports.ui.panelMenu;
-const { arrowIcon, PopupMenuItem } = imports.ui.popupMenu;
-const extensionUtils = imports.misc.extensionUtils;
-const Me = extensionUtils.getCurrentExtension();
-const Docker = Me.imports.src.docker;
-const { DockerSubMenu } = Me.imports.src.dockerSubMenuMenuItem;
-const GObject = imports.gi.GObject;
-const { GLib } = imports.gi;
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import * as Docker from './docker.js'
+import { PopupMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
+import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js'
+import { DockerSubMenu } from './dockerSubMenuMenuItem.js'
+import  * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+import { getExtensionObject } from '../extension.js'
 
 const isContainerUp = (container) => container.status.indexOf("Up") > -1;
 
 // Docker icon as panel menu
-var DockerMenu = GObject.registerClass(
-  class DockerMenu extends panelMenu.Button {    
+export const DockerMenu = GObject.registerClass(
+  class DockerMenu extends panelMenu.Button {
     _init(menuAlignment, nameText) {
       super._init(menuAlignment, nameText);
       this._refreshCount = this._refreshCount.bind(this);
@@ -23,8 +23,7 @@ var DockerMenu = GObject.registerClass(
       this._feedMenu = this._feedMenu.bind(this);
       this._updateCountLabel = this._updateCountLabel.bind(this);
       this._timeout = null;
-
-      this.settings = extensionUtils.getSettings(
+      this.settings = getExtensionObject().getSettings(
         "red.software.systems.easy_docker_containers"
       );
 
@@ -37,7 +36,7 @@ var DockerMenu = GObject.registerClass(
       // Custom Docker icon as menu button
       const hbox = new St.BoxLayout({ style_class: "panel-status-menu-box" });
       const gicon = Gio.icon_new_for_string(
-        Me.path + "/icons/docker-symbolic.svg"
+        getExtensionObject().path + "/icons/docker-symbolic.svg"
       );
       //const panelIcon = (name = "docker-symbolic", styleClass = "system-status-icon") => new St.Icon({ gicon: gioIcon(name), style_class: styleClass, icon_size: "16" });
       const dockerIcon = new St.Icon({
@@ -61,6 +60,11 @@ var DockerMenu = GObject.registerClass(
       if (Docker.hasPodman || Docker.hasDocker) {
         this.show();
       }
+    }
+
+    disable() {
+      this.clearLoop();
+      super.disable();
     }
 
     _refreshDelayChanged() {
@@ -131,9 +135,9 @@ var DockerMenu = GObject.registerClass(
       if (this._timeout) {
         GLib.source_remove(this._timeout);
       }
-   
+
         this._timeout = null;
-      
+
     }
 
     async _refreshCount() {
@@ -141,14 +145,6 @@ var DockerMenu = GObject.registerClass(
         // If the extension is not enabled but we have already set a timeout, it means this function
         // is called by the timeout after the extension was disabled, we should just bail out and
         // clear the loop to avoid a race condition infinitely spamming logs about St.Label not longer being accessible
-        if (
-          Me.state !== extensionUtils.ExtensionState.ENABLED &&
-          this._timeout !== null
-        ) {
-          this.clearLoop();
-          return;
-        }
-
         this.clearLoop();
 
         const dockerCount = await Docker.getContainerCount();

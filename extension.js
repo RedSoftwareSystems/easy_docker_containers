@@ -1,25 +1,17 @@
-"use strict";
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { DockerMenu } from './src/dockerMenu.js'
 
-const Main = imports.ui.main;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const DockerMenu = Me.imports.src.dockerMenu;
+export const getExtensionObject = () => Extension.lookupByUUID('easy_docker_containers@red.software.systems');
+export default class DockerContainersExtensionObject extends Extension {
+  enable() {
+    this._indicator = new DockerMenu(0.0, _("Docker containers"));
+    Main.panel.addToStatusArea("docker-menu", this._indicator);
+  }
 
-// Triggered when extension has been initialized
-function init() {}
-
-// The docker indicator
-let _indicator;
-
-// Triggered when extension is enabled
-function enable() {
-  _indicator = new DockerMenu.DockerMenu(0.0, _("Docker containers"));
-  Main.panel.addToStatusArea("docker-menu", _indicator);
-}
-
-// Triggered when extension is disabled
-function disable() {
-  _indicator.clearLoop();
-  _indicator.destroy();
-  _indicator = null;
+  disable() {
+    this._indicator.clearLoop();
+    this._indicator.destroy();
+    this._indicator = null;
+  }
 }
