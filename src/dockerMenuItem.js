@@ -1,14 +1,12 @@
 "use strict";
 
-const { PopupMenuItem } = imports.ui.popupMenu;
-const Main = imports.ui.main;
-const extensionUtils = imports.misc.extensionUtils;
-const Me = extensionUtils.getCurrentExtension();
-const Docker = Me.imports.src.docker;
-const GObject = imports.gi.GObject;
+import { PopupMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
+import GObject from 'gi://GObject';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as Docker from './docker.js'
 
 // Docker actions for each container
-var DockerMenuItem = GObject.registerClass(
+export const DockerMenuItem = GObject.registerClass(
   class DockerMenuItem extends PopupMenuItem {
     _init(containerName, dockerCommand, icon) {
       super._init(Docker.dockerCommandsToLabels[dockerCommand]);

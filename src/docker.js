@@ -1,11 +1,9 @@
 "use strict";
 
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
-const Util = imports.misc.util;
-const ByteArray = imports.byteArray;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 
-var dockerCommandsToLabels = {
+export const dockerCommandsToLabels = {
   start: "Start",
   restart: "Restart",
   stop: "Stop",
@@ -15,17 +13,17 @@ var dockerCommandsToLabels = {
   logs: "Logs",
 };
 
-var hasDocker = !!GLib.find_program_in_path("docker");
-var hasPodman = !!GLib.find_program_in_path("podman");
-var hasXTerminalEmulator = !!GLib.find_program_in_path("x-terminal-emulator");
+export const hasDocker = !!GLib.find_program_in_path("docker");
+export const hasPodman = !!GLib.find_program_in_path("podman");
+export const hasXTerminalEmulator = !!GLib.find_program_in_path("x-terminal-emulator");
 
 /**
  * Check if Linux user is in 'docker' group (to manage Docker without 'sudo')
  * @return {Boolean} whether current Linux user is in 'docker' group or not
  */
-var isUserInDockerGroup = (() => {
+export const isUserInDockerGroup = (() => {
   const _userName = GLib.get_user_name();
-  let _userGroups = ByteArray.toString(
+  let _userGroups = GLib.ByteArray.toString(
     GLib.spawn_command_line_sync("groups " + _userName)[1]
   );
   let _inDockerGroup = false;
@@ -38,8 +36,8 @@ var isUserInDockerGroup = (() => {
  * Check if docker daemon is running
  * @return {Boolean} whether docker daemon is running or not
  */
-var isDockerRunning = async () => {
-  const cmdResult = await execCommand(["/bin/ps", "cax"]);  
+export const isDockerRunning = async () => {
+  const cmdResult = await execCommand(["/bin/ps", "cax"]);
   return cmdResult.search(/dockerd/) >= 0;
 };
 
@@ -47,9 +45,9 @@ var isDockerRunning = async () => {
  * Get an array of containers
  * @return {Array} The array of containers as { project, name, status }
  */
- var getContainers = async () => {
+export const getContainers = async () => {
   const psOut = await execCommand(["docker", "ps", "-a", "--format", "{{.Names}},{{.Status}}"]);
-  
+
   const images = psOut.split('\n').filter((line) => line.trim().length).map((line) => {
     const [name, status] = line.split(',');
     return {
@@ -70,9 +68,9 @@ var isDockerRunning = async () => {
  * Get the number of containers
  * @return {Number} The number of running containers
  */
-var getContainerCount = async () => {
+export const getContainerCount = async () => {
   const psOut = await execCommand(["docker", "ps", "--format", "{{.Names}},{{.Status}}"]);
-  
+
   const images = psOut.split('\n').filter((line) => line.trim().length).map((line) => {
     const [name, status] = line.split(',');
     return {
@@ -81,7 +79,7 @@ var getContainerCount = async () => {
     }
   });
   return images.length;
-  
+
 };
 
 /**
@@ -90,7 +88,7 @@ var getContainerCount = async () => {
  * @param {String} containerName The container
  * @param {Function} callback A callback that takes the status, command, and stdErr
  */
-var runCommand = async (command, containerName, callback) => {
+export const runCommand = async (command, containerName, callback) => {
   var cmd = hasXTerminalEmulator
     ? ["x-terminal-emulator", "-e", "sh", "-c"]
     : ["gnome-terminal", "--", "sh", "-c"];
@@ -112,7 +110,7 @@ var runCommand = async (command, containerName, callback) => {
   }
 };
 
-async function execCommand(
+export async function execCommand(
   argv,
   callback /*(status, command, err) */,
   cancellable = null

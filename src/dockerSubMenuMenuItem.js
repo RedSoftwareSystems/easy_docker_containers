@@ -1,12 +1,12 @@
 "use strict";
 
-const St = imports.gi.St;
-const Gio = imports.gi.Gio; // For custom icons
-const { PopupSubMenuMenuItem } = imports.ui.popupMenu;
-const extensionUtils = imports.misc.extensionUtils;
-const Me = extensionUtils.getCurrentExtension();
-const { DockerMenuItem } = Me.imports.src.dockerMenuItem;
-const GObject = imports.gi.GObject;
+import St from 'gi://St';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import { PopupSubMenuMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import { DockerMenuItem } from './dockerMenuItem.js';
+import {getExtensionObject} from "../extension.js";
+
 
 /**
  * Create Gio.icon based St.Icon
@@ -17,7 +17,7 @@ const GObject = imports.gi.GObject;
  * @return {Object} an St.Icon instance
  */
 const gioIcon = (name = "docker-container-unavailable-symbolic") =>
-  Gio.icon_new_for_string(Me.path + "/icons/" + name + ".svg");
+  Gio.icon_new_for_string(getExtensionObject().path + "/icons/" + name + ".svg");
 const menuIcon = (
   name = "docker-container-unavailable-symbolic",
   styleClass = "system-status-icon"
@@ -44,7 +44,7 @@ const getStatus = (statusMessage) => {
 };
 
 // Menu entry representing a Docker container
-var DockerSubMenu = GObject.registerClass(
+export const DockerSubMenu = GObject.registerClass(
   class DockerSubMenu extends PopupSubMenuMenuItem {
     _init(projectName, containerName, containerStatusMessage) {
       super._init(`${projectName}${projectName?' ∘ ': ''}${containerName}`);
