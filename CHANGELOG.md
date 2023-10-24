@@ -2,22 +2,31 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [21] - 2023-10-24
+
+Added Gnome 45 support (thanks to https://github.com/hhoao)
 
 ## [20] - 2022-04-18
+
 Added Gnome 44 support
+
 ## [19] - 2022-10-03
+
 Added Gnome 43 support
 
 ## [18] - 2022-06-06
-### Fix
-Fixed compatibility issue with gnome 3.x
 
+### Fix
+
+Fixed compatibility issue with gnome 3.x
 
 ## [17] - 2022-05-31
 
 ### Fix
+
 Remove of Mainloop dependency
 Optimizing Promise.all call
+
 ## [16] - 2022-05-11
 
 ### Fix
