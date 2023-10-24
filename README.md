@@ -45,6 +45,7 @@ The following actions are available from the GNOME Panel menu per Docker contain
 - [jacobfogg](https://github.com/jacobfogg)
 - [albeto001](https://github.com/albeto001)
 - [pierreavizou] (https://github.com/pierreavizou)
+- [hhoao] (https://github.com/hhoao)
 
 ## Credits
 

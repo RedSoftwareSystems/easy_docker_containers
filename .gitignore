@@ -3,3 +3,4 @@
 .history
 .idea
 .vscode
+*.compiled
