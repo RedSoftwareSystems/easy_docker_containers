@@ -1,7 +1,7 @@
 "use strict";
 
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
+import Gio from "gi://Gio";
+import GLib from "gi://GLib";
 
 export const dockerCommandsToLabels = {
   start: "Start",
@@ -15,7 +15,12 @@ export const dockerCommandsToLabels = {
 
 export const hasDocker = !!GLib.find_program_in_path("docker");
 export const hasPodman = !!GLib.find_program_in_path("podman");
-export const hasXTerminalEmulator = !!GLib.find_program_in_path("x-terminal-emulator");
+
+const validTerminals = {
+  "x-terminal-emulator": !!GLib.find_program_in_path("x-terminal-emulator"),
+  "gnome-terminal": !!GLib.find_program_in_path("gnome-terminal"),
+  kgx: !!GLib.find_program_in_path("kgx"),
+};
 
 /**
  * Check if Linux user is in 'docker' group (to manage Docker without 'sudo')
@@ -46,22 +51,41 @@ export const isDockerRunning = async () => {
  * @return {Array} The array of containers as { project, name, status }
  */
 export const getContainers = async () => {
-  const psOut = await execCommand(["docker", "ps", "-a", "--format", "{{.Names}},{{.Status}}"]);
+  const psOut = await execCommand([
+    "docker",
+    "ps",
+    "-a",
+    "--format",
+    "{{.Names}},{{.Status}}",
+  ]);
 
-  const images = psOut.split('\n').filter((line) => line.trim().length).map((line) => {
-    const [name, status] = line.split(',');
-    return {
-      name,
-      status,
-    }
-  });
+  const images = psOut
+    .split("\n")
+    .filter((line) => line.trim().length)
+    .map((line) => {
+      const [name, status] = line.split(",");
+      return {
+        name,
+        status,
+      };
+    });
 
-  return Promise.all(images.map(({name}) => execCommand(["docker", "inspect", "-f", "{{index .Config.Labels \"com.docker.compose.project\"}}", name])))
-    .then((values) => values.map((commandOutput, i) => ({
-      project: commandOutput.split('\n')[0].trim(),
-        ...images[i]
-    })))
-
+  return Promise.all(
+    images.map(({ name }) =>
+      execCommand([
+        "docker",
+        "inspect",
+        "-f",
+        '{{index .Config.Labels "com.docker.compose.project"}}',
+        name,
+      ])
+    )
+  ).then((values) =>
+    values.map((commandOutput, i) => ({
+      project: commandOutput.split("\n")[0].trim(),
+      ...images[i],
+    }))
+  );
 };
 
 /**
@@ -69,17 +93,24 @@ export const getContainers = async () => {
  * @return {Number} The number of running containers
  */
 export const getContainerCount = async () => {
-  const psOut = await execCommand(["docker", "ps", "--format", "{{.Names}},{{.Status}}"]);
+  const psOut = await execCommand([
+    "docker",
+    "ps",
+    "--format",
+    "{{.Names}},{{.Status}}",
+  ]);
 
-  const images = psOut.split('\n').filter((line) => line.trim().length).map((line) => {
-    const [name, status] = line.split(',');
-    return {
-      name,
-      status,
-    }
-  });
+  const images = psOut
+    .split("\n")
+    .filter((line) => line.trim().length)
+    .map((line) => {
+      const [name, status] = line.split(",");
+      return {
+        name,
+        status,
+      };
+    });
   return images.length;
-
 };
 
 /**
@@ -89,9 +120,22 @@ export const getContainerCount = async () => {
  * @param {Function} callback A callback that takes the status, command, and stdErr
  */
 export const runCommand = async (command, containerName, callback) => {
-  var cmd = hasXTerminalEmulator
-    ? ["x-terminal-emulator", "-e", "sh", "-c"]
-    : ["gnome-terminal", "--", "sh", "-c"];
+  let cmd = [];
+  if (validTerminals.kgx) {
+    cmd = ["kgx", "-e"];
+  } else if (validTerminals["gnome-terminal"]) {
+    cmd = ["gnome-terminal", "--", "sh", "-c"];
+  } else if (validTerminals["x-terminal-emulator"]) {
+    cmd = ["x-terminal-emulator", "-e", "sh", "-c"];
+  } else {
+    const errMsg = `No valid terminal found (${Object.keys(validTerminals).join(
+      ", "
+    )})`;
+    Main.notify(errMsg);
+    logError(err);
+    return;
+  }
+
   switch (command) {
     case "exec":
       cmd = [...cmd, "'docker exec -it " + containerName + " sh; exec $SHELL'"];
@@ -144,8 +188,8 @@ export async function execCommand(
           if (!ok) {
             const status = proc.get_exit_status();
             throw new Gio.IOErrorEnum({
-                code: Gio.io_error_from_errno(status),
-                message: stderr ? stderr.trim() : GLib.strerror(status)
+              code: Gio.io_error_from_errno(status),
+              message: stderr ? stderr.trim() : GLib.strerror(status),
             });
           }
           resolve(stdout);

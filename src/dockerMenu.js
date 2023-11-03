@@ -1,15 +1,17 @@
 "use strict";
 
-import GLib from 'gi://GLib';
-import St from 'gi://St';
-import Gio from 'gi://Gio';
-import GObject from 'gi://GObject';
-import * as Docker from './docker.js'
-import { PopupMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
-import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js'
-import { DockerSubMenu } from './dockerSubMenuMenuItem.js'
-import  * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-import { getExtensionObject } from '../extension.js'
+import GLib from "gi://GLib";
+import St from "gi://St";
+import Gio from "gi://Gio";
+import GObject from "gi://GObject";
+import * as Docker from "./docker.js";
+import {
+  PopupMenuItem,
+  PopupMenuSection,
+} from "resource:///org/gnome/shell/ui/popupMenu.js";
+import * as panelMenu from "resource:///org/gnome/shell/ui/panelMenu.js";
+import { getExtensionObject } from "../extension.js";
+import { DockerSubMenu } from "./dockerSubMenuMenuItem.js";
 
 const isContainerUp = (container) => container.status.indexOf("Up") > -1;
 
@@ -27,34 +29,46 @@ export const DockerMenu = GObject.registerClass(
         "red.software.systems.easy_docker_containers"
       );
 
+      this._counterFontSize = this.settings.get_int("counter-font-size");
       this._refreshDelay = this.settings.get_int("refresh-delay");
-      this.settings.connect(
-        "changed::refresh-delay",
-        this._refreshCount
-      );
+      this.settings.connect("changed::refresh-delay", this._refreshCount);
 
       // Custom Docker icon as menu button
       const hbox = new St.BoxLayout({ style_class: "panel-status-menu-box" });
       const gicon = Gio.icon_new_for_string(
         getExtensionObject().path + "/icons/docker-symbolic.svg"
       );
-      //const panelIcon = (name = "docker-symbolic", styleClass = "system-status-icon") => new St.Icon({ gicon: gioIcon(name), style_class: styleClass, icon_size: "16" });
+
       const dockerIcon = new St.Icon({
         gicon: gicon,
         style_class: "system-status-icon",
         icon_size: "16",
       });
-      const loading = _("Loading...");
-      this.buttonText = new St.Label({
-        text: loading,
-        style: "margin-top:4px;",
-      });
 
       hbox.add_child(dockerIcon);
-      hbox.add_child(this.buttonText);
+      const loading = _("Loading...");
+      if (this._refreshDelay > 0 && this._counterFontSize > 0) {
+        this.buttonText = new St.Label({
+          text: loading,
+          style: `margin-top:4px;font-size: ${this._counterFontSize}%;`,
+        });
+
+        hbox.add_child(this.buttonText);
+      }
+
       this.add_child(hbox);
+
+      const scrollView = new St.ScrollView();
+      // scrollView._getTopMenu = () => this.menu._getTopMenu();
+
+      this.menu._section = new PopupMenuSection();
+      scrollView.add_actor(this.menu._section.actor);
+
+      this.menu.box.add_child(scrollView);
+
       this.menu.connect("open-state-changed", this._refreshMenu.bind(this));
-      this.menu.addMenuItem(new PopupMenuItem(loading));
+
+      this.menu._section.addMenuItem(new PopupMenuItem(loading));
 
       this._refreshCount();
       if (Docker.hasPodman || Docker.hasDocker) {
@@ -74,7 +88,11 @@ export const DockerMenu = GObject.registerClass(
     }
 
     _updateCountLabel(count) {
-      if (this.buttonText.get_text() !== count) {
+      if (
+        this._refreshDelay > 0 &&
+        this._counterFontSize > 0 &&
+        this.buttonText.get_text() !== count
+      ) {
         this.buttonText.set_text(count.toString(10));
       }
     }
@@ -89,7 +107,7 @@ export const DockerMenu = GObject.registerClass(
             containers.filter((container) => isContainerUp(container)).length
           );
           this._feedMenu(containers).catch((e) =>
-            this.menu.addMenuItem(new PopupMenuItem(e.message))
+            this.menu._section.addMenuItem(new PopupMenuItem(e.message))
           );
         }
       } catch (e) {
@@ -100,7 +118,7 @@ export const DockerMenu = GObject.registerClass(
     _checkServices() {
       if (!Docker.hasPodman && !Docker.hasDocker) {
         let errMsg = _("Please install Docker or Podman to use this plugin");
-        this.menu.addMenuItem(new PopupMenuItem(errMsg));
+        this.menu._section.addMenuItem(new PopupMenuItem(errMsg));
         throw new Error(errMsg);
       }
     }
@@ -136,8 +154,7 @@ export const DockerMenu = GObject.registerClass(
         GLib.source_remove(this._timeout);
       }
 
-        this._timeout = null;
-
+      this._timeout = null;
     }
 
     async _refreshCount() {
@@ -151,7 +168,7 @@ export const DockerMenu = GObject.registerClass(
         this._updateCountLabel(dockerCount);
 
         // Allow setting a value of 0 to disable background refresh in the settings
-        if (this._refreshDelay > 0) {
+        if (this._refreshDelay > 0 && this._counterFontSize > 0) {
           this._timeout = GLib.timeout_add_seconds(
             GLib.PRIORITY_DEFAULT_IDLE,
             this._refreshDelay,
@@ -180,16 +197,22 @@ export const DockerMenu = GObject.registerClass(
           );
         })
       ) {
-        this.menu.removeAll();
+        this.menu._section.removeAll();
         this._containers = dockerContainers;
+
         this._containers.forEach((container) => {
           const subMenu = new DockerSubMenu(
             container.project,
             container.name,
-            container.status
+            container.status,
+            this.menu
           );
-          this.menu.addMenuItem(subMenu);
+          const scrollView = subMenu.menu.actor;
+          scrollView.set_mouse_scrolling(false);
+          scrollView.set_overlay_scrollbars(false);
+          this.menu._section.addMenuItem(subMenu);
         });
+
         if (!this._containers.length) {
           this.menu.addMenuItem(new PopupMenuItem("No containers detected"));
         }

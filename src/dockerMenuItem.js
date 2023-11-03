@@ -1,9 +1,9 @@
 "use strict";
 
-import { PopupMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
-import GObject from 'gi://GObject';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as Docker from './docker.js'
+import { PopupMenuItem } from "resource:///org/gnome/shell/ui/popupMenu.js";
+import GObject from "gi://GObject";
+import * as Main from "resource:///org/gnome/shell/ui/main.js";
+import * as Docker from "./docker.js";
 
 // Docker actions for each container
 export const DockerMenuItem = GObject.registerClass(
@@ -25,9 +25,11 @@ export const DockerMenuItem = GObject.registerClass(
         } else {
           let errMsg = _("Error occurred when running `" + command + "`");
           Main.notifyError(errMsg);
-          logError(errMsg);
           logError(err);
         }
+      }).catch((err) => {
+        Main.notifyError(`${err}`);
+        logError(err);
       });
     }
   }

@@ -1,12 +1,11 @@
 "use strict";
 
-import St from 'gi://St';
-import Gio from 'gi://Gio';
-import GObject from 'gi://GObject';
-import { PopupSubMenuMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import { DockerMenuItem } from './dockerMenuItem.js';
-import {getExtensionObject} from "../extension.js";
-
+import St from "gi://St";
+import Gio from "gi://Gio";
+import GObject from "gi://GObject";
+import { PopupSubMenuMenuItem } from "resource:///org/gnome/shell/ui/popupMenu.js";
+import { DockerMenuItem } from "./dockerMenuItem.js";
+import { getExtensionObject } from "../extension.js";
 
 /**
  * Create Gio.icon based St.Icon
@@ -17,7 +16,9 @@ import {getExtensionObject} from "../extension.js";
  * @return {Object} an St.Icon instance
  */
 const gioIcon = (name = "docker-container-unavailable-symbolic") =>
-  Gio.icon_new_for_string(getExtensionObject().path + "/icons/" + name + ".svg");
+  Gio.icon_new_for_string(
+    getExtensionObject().path + "/icons/" + name + ".svg"
+  );
 const menuIcon = (
   name = "docker-container-unavailable-symbolic",
   styleClass = "system-status-icon"
@@ -46,9 +47,9 @@ const getStatus = (statusMessage) => {
 // Menu entry representing a Docker container
 export const DockerSubMenu = GObject.registerClass(
   class DockerSubMenu extends PopupSubMenuMenuItem {
-    _init(projectName, containerName, containerStatusMessage) {
-      super._init(`${projectName}${projectName?' ∘ ': ''}${containerName}`);
-
+    _init(projectName, containerName, containerStatusMessage, parentMenu) {
+      super._init(`${projectName}${projectName ? " ∘ " : ""}${containerName}`);
+      this._parentMenu = parentMenu;
       switch (getStatus(containerStatusMessage)) {
         case "stopped":
           this.insert_child_at_index(
@@ -137,6 +138,9 @@ export const DockerSubMenu = GObject.registerClass(
           menuIcon("docker-container-logs-symbolic")
         )
       );
+    }
+    _getTopMenu() {
+      return this._parentMenu?._getTopMenu() || super._getTopMenu();
     }
   }
 );

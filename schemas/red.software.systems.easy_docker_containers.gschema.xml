@@ -5,5 +5,8 @@
     <key name="refresh-delay" type="i">
       <default>2</default>
     </key>
+    <key name="counter-font-size" type="i">
+      <default>70</default>
+    </key>
   </schema>
 </schemalist>
