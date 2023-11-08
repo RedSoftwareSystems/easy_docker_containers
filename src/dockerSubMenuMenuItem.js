@@ -16,9 +16,9 @@ import {getExtensionObject} from "../extension.js";
  *
  * @return {Object} an St.Icon instance
  */
-const gioIcon = (name = "docker-container-unavailable-symbolic") =>
+export const gioIcon = (name = "docker-container-unavailable-symbolic") =>
   Gio.icon_new_for_string(getExtensionObject().path + "/icons/" + name + ".svg");
-const menuIcon = (
+export const menuIcon = (
   name = "docker-container-unavailable-symbolic",
   styleClass = "system-status-icon"
 ) =>
@@ -35,7 +35,7 @@ const menuIcon = (
  *
  * @return {String} The status in ['running', 'paused', 'stopped']
  */
-const getStatus = (statusMessage) => {
+export const getStatus = (statusMessage) => {
   let status = "stopped";
   if (statusMessage.indexOf("Up") > -1) status = "running";
   if (statusMessage.indexOf("Paused") > -1) status = "paused";

@@ -5,11 +5,12 @@ import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import * as Docker from './docker.js'
-import { PopupMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { PopupMenuItem, PopupImageMenuItem, PopupSeparatorMenuItem } from 'resource:///org/gnome/shell/ui/popupMenu.js'
 import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js'
-import { DockerSubMenu } from './dockerSubMenuMenuItem.js'
-import  * as ExtensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+import { DockerSubMenu, getStatus, gioIcon } from './dockerSubMenuMenuItem.js'
 import { getExtensionObject } from '../extension.js'
+import { execCommand } from "./docker.js";
 
 const isContainerUp = (container) => container.status.indexOf("Up") > -1;
 
@@ -164,7 +165,7 @@ export const DockerMenu = GObject.registerClass(
       }
     }
 
-    // Append containers to menu
+    // Append global entries and containers to menu
     async _feedMenu(dockerContainers) {
       await this._check();
       if (
@@ -181,6 +182,22 @@ export const DockerMenu = GObject.registerClass(
         })
       ) {
         this.menu.removeAll();
+
+        // Add common menu entries.
+        let isStopAllEntryEnabled = dockerContainers.some(container => getStatus(container.status) !== "stopped");
+        const stopAllMenuItem = new PopupImageMenuItem('Stop All', gioIcon("docker-container-stop-symbolic"), {
+          activate: isStopAllEntryEnabled,
+          reactive: isStopAllEntryEnabled
+        });
+        stopAllMenuItem.connect("activate", () =>
+            this._stopAllContainers()
+        );
+        this.menu.addMenuItem(stopAllMenuItem);
+
+        const separatorMenuItem = new PopupSeparatorMenuItem();
+        this.menu.addMenuItem(separatorMenuItem);
+
+        // Add containers specific entries.
         this._containers = dockerContainers;
         this._containers.forEach((container) => {
           const subMenu = new DockerSubMenu(
@@ -194,6 +211,24 @@ export const DockerMenu = GObject.registerClass(
           this.menu.addMenuItem(new PopupMenuItem("No containers detected"));
         }
       }
+    }
+
+     // Stops all running containers.
+    _stopAllContainers() {
+      Main.notify("Stopping all running containers ...");
+
+      execCommand(["bash", "-c", "docker stop $(docker ps -q)"], (ok, command, err) => {
+        if (ok) {
+          Main.notify("All containers stopped successfully");
+        } else {
+          let errMsg = _("Error occurred when running `" + command + "`");
+          Main.notifyError(errMsg);
+          logError(errMsg);
+          logError(err);
+        }
+      }).catch(e => {
+        logError(e)
+      });
     }
   }
 );
