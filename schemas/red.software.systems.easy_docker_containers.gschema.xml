@@ -8,5 +8,14 @@
     <key name="counter-font-size" type="i">
       <default>70</default>
     </key>
+    <key name="selected-logging-option" type="i">
+      <default>2</default>
+    </key>
+    <key name="selected-logging-command" type="s">
+      <default>'docker logs -f --tail 2000 %containerName%; exec $SHELL'</default>
+    </key>
+    <key name="counter-enabled" type="b">
+       <default>true</default>
+    </key>
   </schema>
 </schemalist>

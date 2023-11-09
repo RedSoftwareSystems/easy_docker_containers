@@ -29,6 +29,7 @@ export const DockerMenu = GObject.registerClass(
         "red.software.systems.easy_docker_containers"
       );
 
+      this._counterEnabled = this.settings.get_boolean("counter-enabled");
       this._counterFontSize = this.settings.get_int("counter-font-size");
       this._refreshDelay = this.settings.get_int("refresh-delay");
       this.settings.connect("changed::refresh-delay", this._refreshCount);
@@ -47,7 +48,7 @@ export const DockerMenu = GObject.registerClass(
 
       hbox.add_child(dockerIcon);
       const loading = _("Loading...");
-      if (this._refreshDelay > 0 && this._counterFontSize > 0) {
+      if (this._counterEnabled) {
         this.buttonText = new St.Label({
           text: loading,
           style: `margin-top:4px;font-size: ${this._counterFontSize}%;`,
@@ -168,7 +169,7 @@ export const DockerMenu = GObject.registerClass(
         this._updateCountLabel(dockerCount);
 
         // Allow setting a value of 0 to disable background refresh in the settings
-        if (this._refreshDelay > 0 && this._counterFontSize > 0) {
+        if (this._counterEnabled) {
           this._timeout = GLib.timeout_add_seconds(
             GLib.PRIORITY_DEFAULT_IDLE,
             this._refreshDelay,
