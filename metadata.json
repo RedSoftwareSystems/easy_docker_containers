@@ -5,5 +5,5 @@
   "url": "https://github.com/RedSoftwareSystems/easy_docker_containers",
   "version": 21,
   "settings-schema": "red.software.systems.easy_docker_containers",
-  "shell-version": ["45"]
+  "shell-version": ["45", "46"]
 }
