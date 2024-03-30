@@ -16,12 +16,6 @@ export const dockerCommandsToLabels = {
 export const hasDocker = !!GLib.find_program_in_path("docker");
 export const hasPodman = !!GLib.find_program_in_path("podman");
 
-const validTerminals = {
-  "x-terminal-emulator": !!GLib.find_program_in_path("x-terminal-emulator"),
-  "gnome-terminal": !!GLib.find_program_in_path("gnome-terminal"),
-  kgx: !!GLib.find_program_in_path("kgx"),
-};
-
 /**
  * Check if Linux user is in 'docker' group (to manage Docker without 'sudo')
  * @return {Boolean} whether current Linux user is in 'docker' group or not
@@ -120,6 +114,12 @@ export const getContainerCount = async () => {
  * @param {Function} callback A callback that takes the status, command, and stdErr
  */
 export const runCommand = async (command, containerName, callback) => {
+  const validTerminals = {
+    "x-terminal-emulator": !!GLib.find_program_in_path("x-terminal-emulator"),
+    "gnome-terminal": !!GLib.find_program_in_path("gnome-terminal"),
+    kgx: !!GLib.find_program_in_path("kgx"),
+  };
+
   let cmd = [];
   if (validTerminals.kgx) {
     cmd = ["kgx", "-e"];
