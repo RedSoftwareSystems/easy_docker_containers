@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [22] - 2024-03-30
+
+Added Gnome 46 support (thanks to https://github.com/hhoao)
+
 ## [21] - 2023-10-24
 
 Added Gnome 45 support (thanks to https://github.com/hhoao)
