@@ -63,7 +63,7 @@ export const DockerMenu = GObject.registerClass(
       // scrollView._getTopMenu = () => this.menu._getTopMenu();
 
       this.menu._section = new PopupMenuSection();
-      scrollView.add_actor(this.menu._section.actor);
+      scrollView.add_child(this.menu._section.actor);
 
       this.menu.box.add_child(scrollView);
 
