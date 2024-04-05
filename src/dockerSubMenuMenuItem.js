@@ -47,7 +47,13 @@ const getStatus = (statusMessage) => {
 // Menu entry representing a Docker container
 export const DockerSubMenu = GObject.registerClass(
   class DockerSubMenu extends PopupSubMenuMenuItem {
-    _init(projectName, containerName, containerStatusMessage, parentMenu) {
+    _init(
+      projectName,
+      containerName,
+      containerStatusMessage,
+      parentMenu,
+      refresh
+    ) {
       super._init(`${projectName}${projectName ? " ∘ " : ""}${containerName}`);
       this._parentMenu = parentMenu;
       switch (getStatus(containerStatusMessage)) {
@@ -61,7 +67,8 @@ export const DockerSubMenu = GObject.registerClass(
             new DockerMenuItem(
               containerName,
               "start",
-              menuIcon("docker-container-start-symbolic")
+              menuIcon("docker-container-start-symbolic"),
+              refresh
             )
           );
           break;
@@ -76,7 +83,8 @@ export const DockerSubMenu = GObject.registerClass(
             new DockerMenuItem(
               containerName,
               "pause",
-              menuIcon("docker-container-pause-symbolic")
+              menuIcon("docker-container-pause-symbolic"),
+              refresh
             )
           );
 
@@ -84,7 +92,8 @@ export const DockerSubMenu = GObject.registerClass(
             new DockerMenuItem(
               containerName,
               "stop",
-              menuIcon("docker-container-stop-symbolic")
+              menuIcon("docker-container-stop-symbolic"),
+              refresh
             )
           );
 
@@ -92,7 +101,8 @@ export const DockerSubMenu = GObject.registerClass(
             new DockerMenuItem(
               containerName,
               "restart",
-              menuIcon("docker-container-restart-symbolic")
+              menuIcon("docker-container-restart-symbolic"),
+              refresh
             )
           );
 
@@ -115,7 +125,8 @@ export const DockerSubMenu = GObject.registerClass(
             new DockerMenuItem(
               containerName,
               "unpause",
-              menuIcon("docker-container-start-symbolic")
+              menuIcon("docker-container-start-symbolic"),
+              refresh
             )
           );
           break;
