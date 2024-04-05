@@ -150,7 +150,7 @@ export const runCommand = async (command, containerName, callback) => {
       break;
     default:
       cmd = ["docker", command, containerName];
-      execCommand(cmd, callback);
+      return execCommand(cmd, callback);
   }
 };
 
@@ -159,7 +159,6 @@ export async function execCommand(
   callback /*(status, command, err) */,
   cancellable = null
 ) {
-  let execProm = null;
   try {
     // There is also a reusable Gio.SubprocessLauncher class available
     let proc = new Gio.Subprocess({
@@ -175,7 +174,7 @@ export async function execCommand(
     // If the class implements GAsyncInitable then Class.new_async() could
     // also be used and awaited in a Promise.
     proc.init(null);
-    execProm = new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       // communicate_utf8() returns a string, communicate() returns a
       // a GLib.Bytes and there are "headless" functions available as well
       proc.communicate_utf8_async(null, cancellable, (proc, res) => {
@@ -202,5 +201,4 @@ export async function execCommand(
     logError(e);
     throw e;
   }
-  return execProm;
 }
