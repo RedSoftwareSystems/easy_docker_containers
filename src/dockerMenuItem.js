@@ -21,14 +21,14 @@ export const DockerMenuItem = GObject.registerClass(
     _dockerAction(containerName, dockerCommand) {
       Docker.runCommand(dockerCommand, containerName, (ok, command, err) => {
         if (ok) {
-          Main.notify("Command `" + command + "` successful");
+          Main.notify("Success", "Command `" + command + "` successful");
         } else {
           let errMsg = _("Error occurred when running `" + command + "`");
-          Main.notifyError(errMsg);
+          Main.notifyError("Error", errMsg);
           logError(err);
         }
       }).catch((err) => {
-        Main.notifyError(`${err}`);
+        Main.notifyError("Error", `${err}`);
         logError(err);
       });
     }
