@@ -21,7 +21,6 @@ export const DockerMenuItem = GObject.registerClass(
       );
     }
     _dockerAction(containerName, dockerCommand) {
-      this.
       Docker.runCommand(dockerCommand, containerName, (ok, command, err) => {
         if (ok) {
           Main.notify("Success", "Command `" + command + "` successful");
