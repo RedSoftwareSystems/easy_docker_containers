@@ -84,7 +84,7 @@ export const getContainers = async () => {
 
 /**
  * Get the number of containers
- * @return {Number} The number of running containers
+ * @return {Promise<Number>} The number of running containers
  */
 export const getContainerCount = async () => {
   const psOut = await execCommand([
