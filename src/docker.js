@@ -131,7 +131,7 @@ export const runCommand = async (command, containerName, callback) => {
     const errMsg = `No valid terminal found (${Object.keys(validTerminals).join(
       ", "
     )})`;
-    Main.notify(errMsg);
+    Main.notify("Error", errMsg);
     logError(err);
     return;
   }
