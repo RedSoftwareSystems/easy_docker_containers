@@ -216,7 +216,9 @@ export const DockerMenu = GObject.registerClass(
         });
 
         if (!this._containers.length) {
-          this.menu.addMenuItem(new PopupMenuItem("No containers detected"));
+          this.menu._section.addMenuItem(
+            new PopupMenuItem("No containers detected")
+          );
         }
       }
     }
