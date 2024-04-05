@@ -206,7 +206,8 @@ export const DockerMenu = GObject.registerClass(
             container.project,
             container.name,
             container.status,
-            this.menu
+            this.menu,
+            this._refreshMenu,
           );
           const scrollView = subMenu.menu.actor;
           scrollView.set_mouse_scrolling(false);
