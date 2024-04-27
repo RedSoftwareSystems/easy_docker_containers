@@ -117,44 +117,6 @@ export default class DockerContainersPreferences extends ExtensionPreferences {
     const counterGroup = makePrefCouterGroup(settings);
     page.add(counterGroup);
 
-    // const counterEnabledSwitchRow = this.getCounterEnableSwitchRow();
-    // group.add(counterEnabledSwitchRow);
-
-    // const rowRefresh = new Adw.ActionRow({
-    //   title: "Counter refresh (sec)",
-    // });
-    // group.add(rowRefresh);
-
-    // const delayInput = this.getIntervalSpinButton();
-    // rowRefresh.add_suffix(delayInput);
-    // rowRefresh.activatable_widget = delayInput;
-
-    // const rowCounterFontSize = new Adw.ActionRow({
-    //   title: "Counter font size.",
-    // });
-    // group.add(rowCounterFontSize);
-    // const counterFontSizeInput = this.getCounterFontSizeButton();
-    // rowCounterFontSize.add_suffix(counterFontSizeInput);
-    // rowCounterFontSize.activatable_widget = counterFontSizeInput;
-
-    // const rowLoggingOptions = new Adw.ActionRow({
-    //   title: "Logging terminal",
-    // });
-    // group.add(rowLoggingOptions);
-
-    // const rowLoggingCommand = new Adw.ActionRow({ title: "Logging command" });
-    // group.add(rowLoggingCommand);
-
-    // const loggingInputCommand = this.getTextLoggingCommand();
-    // const loggingOptionsDropDown =
-    //   this.getDropDownLoggingOptions(loggingInputCommand);
-
-    // rowLoggingOptions.add_suffix(loggingOptionsDropDown);
-    // rowLoggingOptions.activatable_widget = loggingOptionsDropDown;
-
-    // rowLoggingCommand.add_suffix(loggingInputCommand);
-    // rowLoggingCommand.activatable_widget = loggingInputCommand;
-
     window.add(page);
   }
 }
