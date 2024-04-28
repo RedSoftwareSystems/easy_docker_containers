@@ -60,11 +60,12 @@ export const DockerMenu = GObject.registerClass(
       this.add_child(hbox);
 
       const scrollView = new St.ScrollView();
-      // scrollView._getTopMenu = () => this.menu._getTopMenu();
-
       this.menu._section = new PopupMenuSection();
-      scrollView.add_child(this.menu._section.actor);
-
+      if (scrollView.add_actor) {
+        scrollView.add_actor(this.menu._section.actor);  
+      } else {
+        scrollView.add_child(this.menu._section.actor);
+      }
       this.menu.box.add_child(scrollView);
 
       this.menu.connect("open-state-changed", this._refreshMenu.bind(this));
@@ -207,7 +208,7 @@ export const DockerMenu = GObject.registerClass(
             container.name,
             container.status,
             this.menu,
-            this._refreshMenu,
+            this._refreshMenu
           );
           const scrollView = subMenu.menu.actor;
           scrollView.set_mouse_scrolling(false);
