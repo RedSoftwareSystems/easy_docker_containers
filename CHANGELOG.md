@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [26] - 2024-08-21
+
+Added Docker compose support!
 
 ## [25] - 2024-04-28
 
@@ -9,7 +12,7 @@ Gnome 45 regression fix
 
 ## [24] - 2024-04-27
 
-Gnome 46 compatibility issues fixes 
+Gnome 46 compatibility issues fixes
 
 ## [23] - 2024-03-30
 

@@ -3,12 +3,18 @@
 import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
+const COMPOSE_PREFIX = "com.docker.compose";
 export const dockerCommandsToLabels = {
   start: "Start",
   restart: "Restart",
   stop: "Stop",
   pause: "Pause",
   unpause: "Unpause",
+  "compose start": "Start (compose)",
+  "compose restart": "Restart  (compose)",
+  "compose stop": "Stop  (compose)",
+  "compose pause": "Pause  (compose)",
+  "compose unpause": "Unpause  (compose)",
   exec: "Exec",
   logs: "Logs",
 };
@@ -42,7 +48,7 @@ export const isDockerRunning = async () => {
 
 /**
  * Get an array of containers
- * @return {Array} The array of containers as { project, name, status }
+ * @return {Array} The array of containers as { compose?: {service: string, project: string, conmfigFiles: string, workingDir: string}, name: string, status: string }
  */
 export const getContainers = async () => {
   const psOut = await execCommand([
@@ -64,22 +70,27 @@ export const getContainers = async () => {
       };
     });
 
-  return Promise.all(
+  const containersInfo = await Promise.all(
     images.map(({ name }) =>
-      execCommand([
-        "docker",
-        "inspect",
-        "-f",
-        '{{index .Config.Labels "com.docker.compose.project"}}',
-        name,
-      ])
+      execCommand(["docker", "inspect", "-f", "{{json .Config.Labels}}", name])
     )
-  ).then((values) =>
-    values.map((commandOutput, i) => ({
-      project: commandOutput.split("\n")[0].trim(),
-      ...images[i],
-    }))
   );
+  return containersInfo.map((commandOutput, i) => {
+    const jsonOutput = JSON.parse(commandOutput);
+    return {
+      ...(jsonOutput[`${COMPOSE_PREFIX}.project`]
+        ? {
+            compose: {
+              service: jsonOutput[`${COMPOSE_PREFIX}.service`],
+              project: jsonOutput[`${COMPOSE_PREFIX}.project`],
+              configFiles: jsonOutput[`${COMPOSE_PREFIX}.project.config_files`],
+              workingDir: jsonOutput[`${COMPOSE_PREFIX}.project.working_dir`],
+            },
+          }
+        : {}),
+      ...images[i],
+    };
+  });
 };
 
 /**
@@ -136,7 +147,7 @@ export const runCommand = async (command, containerName, callback) => {
     return;
   }
 
-  switch (command) {
+  switch (command[0]) {
     case "exec":
       cmd = [...cmd, "'docker exec -it " + containerName + " sh; exec $SHELL'"];
       GLib.spawn_command_line_async(cmd.join(" "));
@@ -149,7 +160,15 @@ export const runCommand = async (command, containerName, callback) => {
       GLib.spawn_command_line_async(cmd.join(" "));
       break;
     default:
-      cmd = ["docker", command, containerName];
+      const [commands, ...commandArguments] = [command].flat();
+      const [dockerCommand1, dockerCommand2] = commands.split(" ");
+
+      cmd = [
+        "docker",
+        dockerCommand1,
+        ...(commandArguments ? commandArguments : []),
+        ...(dockerCommand2 ? [dockerCommand2] : [containerName]),
+      ];
       return execCommand(cmd, callback);
   }
 };
@@ -193,6 +212,7 @@ export async function execCommand(
           }
           resolve(stdout);
         } catch (e) {
+          logError(e);
           reject(e);
         }
       });
