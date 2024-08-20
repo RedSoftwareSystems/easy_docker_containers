@@ -62,7 +62,7 @@ export const DockerMenu = GObject.registerClass(
       const scrollView = new St.ScrollView();
       this.menu._section = new PopupMenuSection();
       if (scrollView.add_actor) {
-        scrollView.add_actor(this.menu._section.actor);  
+        scrollView.add_actor(this.menu._section.actor);
       } else {
         scrollView.add_child(this.menu._section.actor);
       }
@@ -201,14 +201,15 @@ export const DockerMenu = GObject.registerClass(
       ) {
         this.menu._section.removeAll();
         this._containers = dockerContainers;
-
         this._containers.forEach((container) => {
           const subMenu = new DockerSubMenu(
-            container.project,
+            container.compose,
             container.name,
             container.status,
             this.menu,
-            this._refreshMenu
+            () => {
+              this.menu.close();
+            }
           );
           const scrollView = subMenu.menu.actor;
           scrollView.set_mouse_scrolling(false);

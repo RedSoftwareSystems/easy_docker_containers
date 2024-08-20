@@ -10,6 +10,10 @@ A GNOME Shell extension _(GNOME Panel applet)_ to be able to generally control y
 
 The following actions are available from the GNOME Panel menu per Docker container:
 
+- **Start (compose)** _(Will start the services of the related compose project when available.)_
+- **Stop (compose)** _(Will stop the services of the related compose project when available.)_
+- **Pause (compose)** _(Will pause the services of the related compose project when available.)_
+- **Restart (compose)** _(Will restart the services of the related compose project when available.)_
 - **Start** _(Will start the container.)_
 - **Stop** _(Will stop the container.)_
 - **Pause** _(Will pause the container.)_
