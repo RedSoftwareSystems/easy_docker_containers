@@ -237,6 +237,14 @@ export const DockerSubMenu = GObject.registerClass(
           closePopup
         )
       );
+      this.menu.addMenuItem(
+        new DockerMenuItem(
+          containerName,
+          ["inspect"],
+          menuIcon("docker-container-inspect-symbolic"),
+          closePopup
+        )
+      );
     }
     _getTopMenu() {
       return this._parentMenu?._getTopMenu() || super._getTopMenu();

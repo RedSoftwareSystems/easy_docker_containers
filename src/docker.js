@@ -17,6 +17,7 @@ export const dockerCommandsToLabels = {
   "compose unpause": "Unpause  (compose)",
   exec: "Exec",
   logs: "Logs",
+  inspect: "Inspect",
 };
 
 export const hasDocker = !!GLib.find_program_in_path("docker");
@@ -148,6 +149,10 @@ export const runCommand = async (command, containerName, callback) => {
   }
 
   switch (command[0]) {
+    case "inspect":
+      cmd = [...cmd, "'docker inspect " + containerName + "; exec $SHELL' "];
+      GLib.spawn_command_line_async(cmd.join(" "));
+      break;
     case "exec":
       cmd = [...cmd, "'docker exec -it " + containerName + " sh; exec $SHELL'"];
       GLib.spawn_command_line_async(cmd.join(" "));
