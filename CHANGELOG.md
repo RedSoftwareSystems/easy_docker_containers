@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [27] - 2024-11-06
+
+Added Gnome 47 support
+
 ## [26] - 2024-08-21
 
 Added Docker compose support!
