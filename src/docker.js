@@ -29,7 +29,7 @@ export const hasPodman = !!GLib.find_program_in_path("podman");
 export const isUserInDockerGroup = (() => {
   const _userName = GLib.get_user_name();
   let _userGroups = GLib.ByteArray.toString(
-    GLib.spawn_command_line_sync("groups " + _userName)[1]
+    GLib.spawn_command_line_sync("groups " + _userName)[1],
   );
   let _inDockerGroup = false;
   if (_userGroups.match(/\sdocker[\s\n]/g)) _inDockerGroup = true; // Regex search for ' docker ' or ' docker' in Linux user's groups
@@ -72,8 +72,8 @@ export const getContainers = async () => {
 
   const containersInfo = await Promise.all(
     images.map(({ name }) =>
-      execCommand(["docker", "inspect", "-f", "{{json .Config.Labels}}", name])
-    )
+      execCommand(["docker", "inspect", "-f", "{{json .Config.Labels}}", name]),
+    ),
   );
   return containersInfo.map((commandOutput, i) => {
     const jsonOutput = JSON.parse(commandOutput);
@@ -143,10 +143,9 @@ export const runCommand = async (command, containerName, callback) => {
     cmd = ["x-terminal-emulator", "-e", "sh", "-c"];
   } else {
     const errMsg = `No valid terminal found (${Object.keys(validTerminals).join(
-      ", "
+      ", ",
     )})`;
     callback(false, command, errMsg);
-    logError(errMsg);
     return;
   }
 
@@ -179,7 +178,7 @@ export const runCommand = async (command, containerName, callback) => {
 export async function execCommand(
   argv,
   callback /*(status, command, err) */,
-  cancellable = null
+  cancellable = null,
 ) {
   try {
     // There is also a reusable Gio.SubprocessLauncher class available
