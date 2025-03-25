@@ -128,12 +128,15 @@ export const runCommand = async (command, containerName, callback) => {
   const validTerminals = {
     "x-terminal-emulator": !!GLib.find_program_in_path("x-terminal-emulator"),
     "gnome-terminal": !!GLib.find_program_in_path("gnome-terminal"),
+    ptyxis: !!GLib.find_program_in_path("ptyxis"),
     kgx: !!GLib.find_program_in_path("kgx"),
   };
 
   let cmd = [];
   if (validTerminals.kgx) {
     cmd = ["kgx", "-e"];
+  } else if (validTerminals.ptyxis) {
+    cmd = ["ptyxis", "--", "sh", "-c"];
   } else if (validTerminals["gnome-terminal"]) {
     cmd = ["gnome-terminal", "--", "sh", "-c"];
   } else if (validTerminals["x-terminal-emulator"]) {
@@ -142,8 +145,8 @@ export const runCommand = async (command, containerName, callback) => {
     const errMsg = `No valid terminal found (${Object.keys(validTerminals).join(
       ", "
     )})`;
-    Main.notify("Error", errMsg);
-    logError(err);
+    callback(false, command, errMsg);
+    logError(errMsg);
     return;
   }
 
