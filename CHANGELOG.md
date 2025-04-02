@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
-## [28] - 2024-11-06
+## [29] - 2025-04-02
+
+Added Gnome 48 support
+
+
+## [28] - 2025-03-28
 
 Added ptyxis terminal support (thanks to https://github.com/DasJott)
 
