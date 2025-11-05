@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [31] - 2025-11-06
+
+Use ps without absolute path in docker check
+
 ## [30] - 2025-11-05
 
 Added Gnome 49 support
