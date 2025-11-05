@@ -2,10 +2,13 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [30] - 2025-11-05
+
+Added Gnome 49 support
+
 ## [29] - 2025-04-02
 
 Added Gnome 48 support
-
 
 ## [28] - 2025-03-28
 
