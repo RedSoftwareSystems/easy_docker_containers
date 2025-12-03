@@ -70,16 +70,24 @@ export const getContainers = async () => {
       };
     });
 
-  const containersInfo = await Promise.all(
-    images.map(({ name }) =>
-      execCommand(["docker", "inspect", "-f", "{{json .Config.Labels}}", name]),
-    ),
-  );
+  let containersInfo = [];
+  if (images.length) {
+    const inspectOut = await execCommand([
+      "docker",
+      "inspect",
+      "-f",
+      "{{json .Config.Labels}}",
+      ...images.map(({ name }) => name),
+    ]);
+    containersInfo = inspectOut.trim().split("\n");
+  }
+
   return containersInfo.map((commandOutput, i) => {
-    const jsonOutput = JSON.parse(commandOutput);
-    return {
-      ...(jsonOutput[`${COMPOSE_PREFIX}.project`]
-        ? {
+    try {
+      const jsonOutput = JSON.parse(commandOutput);
+      return {
+        ...(jsonOutput[`${COMPOSE_PREFIX}.project`]
+          ? {
             compose: {
               service: jsonOutput[`${COMPOSE_PREFIX}.service`],
               project: jsonOutput[`${COMPOSE_PREFIX}.project`],
@@ -87,9 +95,13 @@ export const getContainers = async () => {
               workingDir: jsonOutput[`${COMPOSE_PREFIX}.project.working_dir`],
             },
           }
-        : {}),
-      ...images[i],
-    };
+          : {}),
+        ...images[i],
+      };
+    } catch (e) {
+      logError(e);
+      return images[i];
+    }
   });
 };
 
