@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [31] - 2025-12-17
+
+### Added
+
+- Batch container inspection optimization: All container names are now processed in a single docker inspect command instead of individual calls, significantly improving performance for users with many containers
+- Error handling for malformed container labels with try-catch around JSON parsing to prevent crashes
+
+(thanks to https://github.com/fabiogiaffaglione)
+
+### Fixed
+
+- Docker daemon check now uses `sh -c` to properly execute ps command across different platforms
+- Handle empty container arrays to avoid unnecessary command execution
+- Improved compose object formatting for better code readability
+
 ## [30] - 2025-11-05
 
 Added Gnome 49 support
