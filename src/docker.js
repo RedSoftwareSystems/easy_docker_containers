@@ -24,18 +24,13 @@ export const hasPodman = !!GLib.find_program_in_path("podman");
 
 /**
  * Check if Linux user is in 'docker' group (to manage Docker without 'sudo')
- * @return {Boolean} whether current Linux user is in 'docker' group or not
+ * @return {Promise<Boolean>} whether current Linux user is in 'docker' group or not
  */
-export const isUserInDockerGroup = (() => {
+export const isUserInDockerGroup = async () => {
   const _userName = GLib.get_user_name();
-  let _userGroups = GLib.ByteArray.toString(
-    GLib.spawn_command_line_sync("groups " + _userName)[1],
-  );
-  let _inDockerGroup = false;
-  if (_userGroups.match(/\sdocker[\s\n]/g)) _inDockerGroup = true; // Regex search for ' docker ' or ' docker' in Linux user's groups
-
-  return _inDockerGroup;
-})();
+  const userGroups = await execCommand(["groups", _userName]);
+  return !!userGroups.match(/\sdocker[\s\n]/g); // Regex search for ' docker ' or ' docker' in Linux user's groups
+};
 
 /**
  * Check if docker daemon is running

@@ -26,7 +26,7 @@ export const DockerMenu = GObject.registerClass(
       this._updateCountLabel = this._updateCountLabel.bind(this);
       this._timeout = null;
       this.settings = getExtensionObject().getSettings(
-        "red.software.systems.easy_docker_containers"
+        "org.gnome.shell.extensions.easy_docker_containers"
       );
 
       this._counterEnabled = this.settings.get_boolean("counter-enabled");
@@ -135,7 +135,7 @@ export const DockerMenu = GObject.registerClass(
     }
 
     async _checkUserInDockerGroup() {
-      if (!Docker.hasPodman && !(await Docker.isUserInDockerGroup)) {
+      if (!Docker.hasPodman && !(await Docker.isUserInDockerGroup())) {
         let errMsg = _(
           "Please put your Linux user into `docker` group first!\n(Seems not in that yet.)"
         );
