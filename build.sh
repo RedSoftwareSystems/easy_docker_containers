@@ -3,5 +3,5 @@
 # Simple bash script to build the GNOME Shell extension
 echo "Zipping the extension..."
 glib-compile-schemas schemas
-zip -r easy_docker_containers@red.software.systems.zip . -x *.git* -x *.idea* -x *.history* -x *.*~ -x *.sh -x *.vscode/*
+zip -r easy_docker_containers@red.software.systems.zip . -x "*.git*" -x "*.idea*" -x "*.history*" -x "*.*~" -x "*.sh" -x "*.vscode/*" -x "schemas/gschemas.compiled" -x "venv/*"
 echo "Building is done."

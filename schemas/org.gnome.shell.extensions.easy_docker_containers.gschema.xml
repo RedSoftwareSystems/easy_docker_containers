@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="red.software.systems.easy_docker_containers" path="/red/software/systems/easy_docker_containers/">
+  <schema id="org.gnome.shell.extensions.easy_docker_containers" path="/org/gnome/shell/extensions/easy_docker_containers/">
     <!-- See also: https://docs.gtk.org/glib/gvariant-format-strings.html -->
     <key name="refresh-delay" type="i">
       <default>2</default>
