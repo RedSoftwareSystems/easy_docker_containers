@@ -17,5 +17,10 @@
     <key name="counter-enabled" type="b">
        <default>true</default>
     </key>
+    <key name="devcontainer-ide-command" type="s">
+      <default>''</default>
+      <summary>Command to open a devcontainer in the configured IDE</summary>
+      <description>Shell command executed when "Open in IDE" is clicked on a running devcontainer, and automatically after a successful recreate. Use %workspaceFolder% as a placeholder for the workspace path.</description>
+    </key>
   </schema>
 </schemalist>

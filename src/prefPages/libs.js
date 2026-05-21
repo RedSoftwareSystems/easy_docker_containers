@@ -98,6 +98,33 @@ export function makeSwitch(
   return row;
 }
 
+export function makeEntry(
+  options = {
+    settings: null,
+    settingsProperty: "",
+    parent: null,
+    title: "default",
+  }
+) {
+  const row = new Adw.EntryRow({
+    title: options.title,
+  });
+
+  if (options.parent) {
+    options.parent.add(row);
+  }
+
+  if (options.settings && options.settingsProperty) {
+    options.settings.bind(
+      options.settingsProperty,
+      row,
+      "text",
+      Gio.SettingsBindFlags.DEFAULT
+    );
+  }
+  return row;
+}
+
 export function makeCombo(
   options = {
     settings: null,

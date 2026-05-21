@@ -25,6 +25,7 @@ export const DockerMenu = GObject.registerClass(
       this._feedMenu = this._feedMenu.bind(this);
       this._updateCountLabel = this._updateCountLabel.bind(this);
       this._timeout = null;
+      this._destroyed = false;
       this.settings = getExtensionObject().getSettings(
         "org.gnome.shell.extensions.easy_docker_containers"
       );
@@ -72,8 +73,20 @@ export const DockerMenu = GObject.registerClass(
 
       this.menu._section.addMenuItem(new PopupMenuItem(loading));
 
-      this._refreshCount();
-      if (Docker.hasPodman || Docker.hasDocker) {
+      // Defer the first docker ps call by 5 s so it does not compete with
+      // GNOME Shell's own startup work. The counter will show "Loading…" until
+      // the timeout fires, which is preferable to stalling the shell.
+      this._timeout = GLib.timeout_add_seconds(
+        GLib.PRIORITY_DEFAULT_IDLE,
+        5,
+        () => {
+          this._timeout = null;
+          if (!this._destroyed)
+            this._refreshCount();
+          return GLib.SOURCE_REMOVE;
+        }
+      );
+      if (Docker.hasPodman() || Docker.hasDocker()) {
         this.show();
       }
     }
@@ -81,6 +94,12 @@ export const DockerMenu = GObject.registerClass(
     disable() {
       this.clearLoop();
       super.disable();
+    }
+
+    destroy() {
+      this._destroyed = true;
+      this.clearLoop();
+      super.destroy();
     }
 
     _refreshDelayChanged() {
@@ -91,6 +110,7 @@ export const DockerMenu = GObject.registerClass(
 
     _updateCountLabel(count) {
       if (
+        this._counterEnabled &&
         this._refreshDelay > 0 &&
         this._counterFontSize > 0 &&
         this.buttonText.get_text() !== count
@@ -102,40 +122,31 @@ export const DockerMenu = GObject.registerClass(
     // Refresh  the menu everytime the user opens it
     // It allows to have up-to-date information on docker containers
     async _refreshMenu() {
+      if (!this.menu.isOpen) return;
       try {
-        if (this.menu.isOpen) {
-          const containers = await Docker.getContainers();
-          this._updateCountLabel(
-            containers.filter((container) => isContainerUp(container)).length
-          );
-          this._feedMenu(containers).catch((e) =>
-            this.menu._section.addMenuItem(new PopupMenuItem(e.message))
-          );
-        }
+        await this._check();
+        const containers = await Docker.getContainers();
+        this._updateCountLabel(
+          containers.filter((container) => isContainerUp(container)).length
+        );
+        await this._feedMenu(containers);
       } catch (e) {
+        this.menu._section.removeAll();
+        this.menu._section.addMenuItem(new PopupMenuItem(e.message));
         logError(e);
       }
     }
 
     _checkServices() {
-      if (!Docker.hasPodman && !Docker.hasDocker) {
+      if (!Docker.hasPodman() && !Docker.hasDocker()) {
         let errMsg = _("Please install Docker or Podman to use this plugin");
         this.menu._section.addMenuItem(new PopupMenuItem(errMsg));
         throw new Error(errMsg);
       }
     }
 
-    async _checkDockerRunning() {
-      if (!Docker.hasPodman && !(await Docker.isDockerRunning())) {
-        let errMsg = _(
-          "Please start your Docker service first!\n(Seems Docker daemon not started yet.)"
-        );
-        throw new Error(errMsg);
-      }
-    }
-
     async _checkUserInDockerGroup() {
-      if (!Docker.hasPodman && !(await Docker.isUserInDockerGroup())) {
+      if (!Docker.hasPodman() && !(await Docker.isUserInDockerGroup())) {
         let errMsg = _(
           "Please put your Linux user into `docker` group first!\n(Seems not in that yet.)"
         );
@@ -144,11 +155,13 @@ export const DockerMenu = GObject.registerClass(
     }
 
     async _check() {
-      return Promise.all([
-        this._checkServices(),
-        this._checkDockerRunning(),
-        //this._checkUserInDockerGroup()
-      ]);
+      // Only verify the docker/podman binary is installed.
+      // Daemon-availability is implicitly checked by getContainers() running
+      // `docker ps -a`, which fails fast with a descriptive error if the
+      // daemon is unreachable. Avoid heavy probes like `docker info` here:
+      // they can take many seconds or stall when registry/plugin lookups
+      // are slow, leaving the menu stuck on "Loading...".
+      this._checkServices();
     }
 
     clearLoop() {
@@ -160,6 +173,8 @@ export const DockerMenu = GObject.registerClass(
     }
 
     async _refreshCount() {
+      if (this._destroyed) return;
+
       try {
         // If the extension is not enabled but we have already set a timeout, it means this function
         // is called by the timeout after the extension was disabled, we should just bail out and
@@ -170,7 +185,7 @@ export const DockerMenu = GObject.registerClass(
         this._updateCountLabel(dockerCount);
 
         // Allow setting a value of 0 to disable background refresh in the settings
-        if (this._counterEnabled) {
+        if (this._counterEnabled && !this._destroyed) {
           this._timeout = GLib.timeout_add_seconds(
             GLib.PRIORITY_DEFAULT_IDLE,
             this._refreshDelay,
@@ -185,8 +200,17 @@ export const DockerMenu = GObject.registerClass(
 
     // Append containers to menu
     async _feedMenu(dockerContainers) {
-      await this._check();
+
+      // Snapshot the recreating state once so we compare consistently.
+      // Rebuild when:
+      //   - recreation state changed since last build (started or just finished)
+      //     → this is the hook that removes the spinner automatically
+      //   - recreation is still in progress (keep the spinner fresh)
+      //   - containers list changed (normal docker-ps diff)
+      const anyRecreating = Docker.hasAnyRecreating();
       if (
+        anyRecreating !== this._anyRecreating ||
+        anyRecreating ||
         !this._containers ||
         dockerContainers.length !== this._containers.length ||
         dockerContainers.some((currContainer, i) => {
@@ -195,15 +219,20 @@ export const DockerMenu = GObject.registerClass(
           return (
             currContainer.project !== container.project ||
             currContainer.name !== container.name ||
+            currContainer.devcontainer?.name !== container.devcontainer?.name ||
+            currContainer.devcontainer?.localFolder !==
+            container.devcontainer?.localFolder ||
             isContainerUp(currContainer) !== isContainerUp(container)
           );
         })
       ) {
+        this._anyRecreating = anyRecreating;
         this.menu._section.removeAll();
         this._containers = dockerContainers;
         this._containers.forEach((container) => {
           const subMenu = new DockerSubMenu(
             container.compose,
+            container.devcontainer,
             container.name,
             container.status,
             this.menu,

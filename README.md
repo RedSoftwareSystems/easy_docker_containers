@@ -21,10 +21,43 @@ The following actions are available from the GNOME Panel menu per Docker contain
 - **Exec** _(Will login to the running container interactively through your default terminal application.)_
 - **Logs** _(Will start the running container's Docker logs in your default terminal application.)_
 
+### Devcontainer support
+
+When a stopped container was created from a [Dev Container](https://containers.dev/) workspace (i.e. the workspace folder contains a `.devcontainer/devcontainer.json`), the extension shows additional information and actions:
+
+- The **devcontainer name** (from `devcontainer.json`) is displayed as a subtitle under the container entry.
+- The **workspace folder path** is shown as a clickable item — clicking it opens a terminal at that folder.
+- **Start** _(Runs `devcontainer up --workspace-folder <path>` to start the container and apply all lifecycle commands.)_
+- **Recreate and start** _(Runs `devcontainer up --remove-existing-container --workspace-folder <path>` to destroy the existing container and create a fresh one from the image.)_
+
+For **running** devcontainers, an additional action is available:
+
+- **Open in IDE** _(Runs the configured IDE command to attach your editor to the running container — see [IDE command](#post-recreate-command-ide-reattachment) below.)_
+
+> **Note:** these actions require the [`devcontainer` CLI](https://github.com/devcontainers/cli) to be installed and reachable on `PATH` (including version-manager-managed paths such as NVM or pyenv).
+
+#### Open in IDE command
+
+Configure a shell command in the extension preferences (_Devcontainer → Open in IDE command_) to attach your editor to a devcontainer. The command is triggered in two situations:
+
+- Clicking **Open in IDE** on any **running** devcontainer.
+- Automatically after a successful **Recreate and start** (since recreation replaces the container ID, causing IDEs to lose their connection).
+
+Use `%workspaceFolder%` as a placeholder for the workspace folder path. Examples:
+
+| IDE | Command |
+|-----|---------|
+| VS Code / Cursor | `code --folder-uri "vscode-remote://dev-container+$(printf '%s' '%workspaceFolder%' \| od -An -tx1 \| tr -dc '[:xdigit:]')/workspaceFolder"` |
+| Zed | `zed %workspaceFolder%` _(Zed detects the devcontainer and prompts to reopen)_ |
+| IntelliJ / JetBrains | No CLI hook available — reconnect manually from inside the IDE. |
+
+Leave the field empty to skip this step entirely.
+
 ## Prerequisite[^1]
 
 1. Properly installed and already running Docker service.
 2. Corresponding Linux user in `docker` Linux group for manage '_Docker_' without `sudo` permission.
+3. _(Devcontainer features only)_ [`devcontainer` CLI](https://github.com/devcontainers/cli) installed and on `PATH`.
 
 [^1]: independently from the extension itself
 
