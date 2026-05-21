@@ -1,10 +1,17 @@
 "use strict";
 
+import Clutter from "gi://Clutter";
 import St from "gi://St";
 import Gio from "gi://Gio";
 import GObject from "gi://GObject";
-import { PopupSubMenuMenuItem } from "resource:///org/gnome/shell/ui/popupMenu.js";
-import { DockerMenuItem } from "./dockerMenuItem.js";
+import { Spinner } from "resource:///org/gnome/shell/ui/animation.js";
+import {
+  PopupMenuItem,
+  PopupSeparatorMenuItem,
+  PopupSubMenuMenuItem,
+} from "resource:///org/gnome/shell/ui/popupMenu.js";
+import { DockerMenuItem, DevcontainerStartMenuItem, DevcontainerRecreateMenuItem, DevcontainerOpenInIDEMenuItem } from "./dockerMenuItem.js";
+import * as Docker from "./docker.js";
 import { getExtensionObject } from "../extension.js";
 
 /**
@@ -44,30 +51,75 @@ const getStatus = (statusMessage) => {
   return status;
 };
 
+const getMenuLabel = (compose, containerName) =>
+  compose ? `${compose.project} ∘ ${compose.service}` : containerName;
+
 // Menu entry representing a Docker container
 export const DockerSubMenu = GObject.registerClass(
   class DockerSubMenu extends PopupSubMenuMenuItem {
     _init(
       compose,
+      devcontainer,
       containerName,
       containerStatusMessage,
       parentMenu,
       closePopup
     ) {
-      super._init(
-        compose ? `${compose.project} ∘ ${compose.service}` : containerName
-      );
+      super._init(getMenuLabel(compose, containerName));
       this._parentMenu = parentMenu;
+
+      // Store data needed for re-rendering the recreating state later.
+      this._devcontainer = devcontainer;
+      this._containerName = containerName;
+      this._closePopup = closePopup;
+      this._inRecreatingSolderState = false;
+
+      if (devcontainer?.name) {
+        this._setupDevcontainerName(devcontainer.name);
+      }
+      if (devcontainer?.localFolder) {
+        const localFolderItem = new PopupMenuItem(devcontainer.localFolder);
+        localFolderItem.insert_child_at_index(
+          menuIcon("docker-devcontainer-info-symbolic"),
+          1
+        );
+        localFolderItem.connect("activate", () => {
+          closePopup?.();
+          Docker.openTerminalAtFolder(devcontainer.localFolder);
+        });
+        this.menu.addMenuItem(localFolderItem);
+        this.menu.addMenuItem(new PopupSeparatorMenuItem());
+
+        // Register a synchronous listener so that when recreation starts
+        // while this menu item is alive, the spinner appears instantly
+        // without waiting for a docker-ps rebuild.
+        this._onRecreatingSolderStart = (folder) => {
+          if (folder === devcontainer.localFolder)
+            this._enterRecreatingSolderState();
+        };
+        Docker.addRecreatingSolderStartListener(this._onRecreatingSolderStart);
+        this.connect("destroy", () =>
+          Docker.removeRecreatingSolderStartListener(this._onRecreatingSolderStart)
+        );
+      }
+
       const composeParams = compose
         ? [
-            "-f",
-            `${compose.configFiles}`,
-            "--project-directory",
-            `${compose.workingDir}`,
-            "-p",
-            `${compose.project}`,
-          ]
+          "-f",
+          `${compose.configFiles}`,
+          "--project-directory",
+          `${compose.workingDir}`,
+          "-p",
+          `${compose.project}`,
+        ]
         : [];
+
+      // If recreation is already in progress when the menu is built,
+      // enter the spinner state immediately (no docker-ps round-trip needed).
+      if (devcontainer?.localFolder && Docker.isRecreating(devcontainer.localFolder)) {
+        this._enterRecreatingSolderState();
+        return;
+      }
 
       switch (getStatus(containerStatusMessage)) {
         case "stopped":
@@ -87,18 +139,39 @@ export const DockerSubMenu = GObject.registerClass(
             );
           }
 
-          this.menu.addMenuItem(
-            new DockerMenuItem(
-              containerName,
-              ["start"],
-              menuIcon(
-                compose
-                  ? "docker-container-start-symbolic-alt"
-                  : "docker-container-start-symbolic"
-              ),
-              closePopup
-            )
-          );
+          if (devcontainer?.localFolder) {
+            this.menu.addMenuItem(
+              new DevcontainerStartMenuItem(
+                devcontainer.localFolder,
+                menuIcon(
+                  compose
+                    ? "docker-container-start-symbolic-alt"
+                    : "docker-container-start-symbolic"
+                ),
+                closePopup
+              )
+            );
+            this.menu.addMenuItem(
+              new DevcontainerRecreateMenuItem(
+                devcontainer.localFolder,
+                menuIcon("docker-devcontainer-recreate-symbolic"),
+                closePopup
+              )
+            );
+          } else {
+            this.menu.addMenuItem(
+              new DockerMenuItem(
+                containerName,
+                ["start"],
+                menuIcon(
+                  compose
+                    ? "docker-container-start-symbolic-alt"
+                    : "docker-container-start-symbolic"
+                ),
+                closePopup
+              )
+            );
+          }
 
           break;
 
@@ -107,6 +180,17 @@ export const DockerSubMenu = GObject.registerClass(
             menuIcon("docker-container-symbolic", "status-running"),
             1
           );
+
+          if (devcontainer?.localFolder) {
+            this.menu.addMenuItem(
+              new DevcontainerOpenInIDEMenuItem(
+                devcontainer.localFolder,
+                menuIcon("docker-devcontainer-open-ide-symbolic"),
+                closePopup
+              )
+            );
+            this.menu.addMenuItem(new PopupSeparatorMenuItem());
+          }
 
           if (compose) {
             this.menu.addMenuItem(
@@ -238,8 +322,82 @@ export const DockerSubMenu = GObject.registerClass(
         )
       );
     }
+    /**
+     * Switch this menu item to the "recreating" visual state in-place.
+     *
+     * Replaces the status icon in the header with an animated spinner and
+     * rebuilds the submenu to show only a disabled "Recreating…" label and
+     * the Logs action. Called synchronously by the recreation-start listener
+     * so the update is instant — no docker-ps round-trip required.
+     *
+     * Guarded by `_inRecreatingSolderState` so repeated calls are no-ops.
+     */
+    _enterRecreatingSolderState() {
+      if (this._inRecreatingSolderState) return;
+      this._inRecreatingSolderState = true;
+
+      // ── Header: swap status icon → animated spinner ──────────────────────
+      // PopupSubMenuMenuItem children without an icon: [label/labelBox, arrow]
+      // With a status icon inserted at index 1:        [label/labelBox, icon, arrow]
+      // Remove the icon (if present) before inserting the spinner.
+      if (this.get_n_children() >= 3) {
+        this.remove_child(this.get_child_at_index(1));
+      }
+      const spinner = new Spinner(16);
+      spinner.play();
+      this.insert_child_at_index(spinner, 1);
+
+      // ── Submenu: rebuild with recreating-state items ──────────────────────
+      this.menu.removeAll();
+
+      if (this._devcontainer?.localFolder) {
+        const localFolderItem = new PopupMenuItem(this._devcontainer.localFolder);
+        localFolderItem.insert_child_at_index(
+          menuIcon("docker-devcontainer-info-symbolic"), 1
+        );
+        localFolderItem.connect("activate", () => {
+          this._closePopup?.();
+          Docker.openTerminalAtFolder(this._devcontainer.localFolder);
+        });
+        this.menu.addMenuItem(localFolderItem);
+        this.menu.addMenuItem(new PopupSeparatorMenuItem());
+      }
+
+      const busyItem = new PopupMenuItem("Recreating\u2026");
+      busyItem.sensitive = false;
+      this.menu.addMenuItem(busyItem);
+      this.menu.addMenuItem(new PopupSeparatorMenuItem());
+      this.menu.addMenuItem(
+        new DockerMenuItem(
+          this._containerName, ["logs"],
+          menuIcon("docker-container-logs-symbolic"),
+          this._closePopup
+        )
+      );
+    }
+
     _getTopMenu() {
       return this._parentMenu?._getTopMenu() || super._getTopMenu();
+    }
+
+    _setupDevcontainerName(devcontainerName) {
+      if (!this.label) return;
+
+      const labelIndex = this.get_children().indexOf(this.label);
+      const labelBox = new St.BoxLayout({
+        vertical: true,
+        x_expand: true,
+        y_align: Clutter.ActorAlign.CENTER,
+      });
+      const devcontainerLabel = new St.Label({
+        text: devcontainerName,
+        style: "font-size: 80%; font-style: italic;",
+      });
+
+      this.remove_child(this.label);
+      labelBox.add_child(this.label);
+      labelBox.add_child(devcontainerLabel);
+      this.insert_child_at_index(labelBox, labelIndex >= 0 ? labelIndex : 0);
     }
   }
 );

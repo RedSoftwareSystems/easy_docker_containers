@@ -7,6 +7,7 @@ import {
 } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
 
 import { makePrefCouterGroup } from "./src/prefPages/dockerPrefCounter.js";
+import { makePrefDevcontainerGroup } from "./src/prefPages/dockerPrefDevcontainer.js";
 
 const DOCKER_LOG_COMMAND =
   "'docker logs -f --tail 2000 %containerName%; exec $SHELL'";
@@ -113,9 +114,8 @@ export default class DockerContainersPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
     const settings = this.getSettings();
     const page = new Adw.PreferencesPage();
-    //const group = new Adw.PreferencesGroup();
-    const counterGroup = makePrefCouterGroup(settings);
-    page.add(counterGroup);
+    page.add(makePrefCouterGroup(settings));
+    page.add(makePrefDevcontainerGroup(settings));
 
     window.add(page);
   }

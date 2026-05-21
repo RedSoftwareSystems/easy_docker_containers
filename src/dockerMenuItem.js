@@ -37,3 +37,53 @@ export const DockerMenuItem = GObject.registerClass(
     }
   }
 );
+
+// Start a devcontainer via `devcontainer up --workspace-folder <localFolder>`
+export const DevcontainerStartMenuItem = GObject.registerClass(
+  class DevcontainerStartMenuItem extends PopupMenuItem {
+    _init(localFolder, icon, closePopup) {
+      super._init("Start");
+      if (icon) {
+        this.insert_child_at_index(icon, 1);
+      }
+      this.connect("activate", () => {
+        closePopup?.();
+        Docker.runDevcontainerUp(localFolder);
+      });
+    }
+  }
+);
+
+// Open a running devcontainer in the user's configured IDE
+export const DevcontainerOpenInIDEMenuItem = GObject.registerClass(
+  class DevcontainerOpenInIDEMenuItem extends PopupMenuItem {
+    _init(localFolder, icon, closePopup) {
+      super._init("Open in IDE");
+      if (icon) {
+        this.insert_child_at_index(icon, 1);
+      }
+      this.connect("activate", () => {
+        closePopup?.();
+        Docker.runDevcontainerIDE(localFolder);
+      });
+    }
+  }
+);
+
+// Recreate a stopped devcontainer via `devcontainer up --remove-existing-container`
+export const DevcontainerRecreateMenuItem = GObject.registerClass(
+  class DevcontainerRecreateMenuItem extends PopupMenuItem {
+    _init(localFolder, icon, closePopup) {
+      super._init("Recreate and start");
+      if (icon) {
+        this.insert_child_at_index(icon, 1);
+      }
+      this.connect("activate", () => {
+        // Intentionally do NOT close the popup: keeping the menu open lets
+        // the synchronous listener call in runDevcontainerRecreate update
+        // the spinner in place, so the user sees it immediately.
+        Docker.runDevcontainerRecreate(localFolder);
+      });
+    }
+  }
+);

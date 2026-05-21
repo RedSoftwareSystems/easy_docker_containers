@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [33] - 2026-05-21
+
+### Added
+
+- Show devcontainer names below Docker container menu entries in smaller italic text when detected.
+- Show devcontainer local folder in a hover tooltip.
+- Open preferred IDE for devcontainer
+- Added configuration for devcontainer IDE
+
 ## [32] - 2026-04-27
 
-Added Gnome 50 support
+Added GNOME 50 support
 
 ## [31] - 2025-12-17
 
