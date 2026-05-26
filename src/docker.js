@@ -164,7 +164,7 @@ export const runCommand = async (command, containerName, callback) => {
 
   switch (command[0]) {
     case "exec":
-      cmd = [...cmd, "'docker exec -it " + containerName + " sh; exec $SHELL'"];
+      cmd = [...cmd, "'docker exec -it " + containerName + " bash || docker exec -it " + containerName + " sh; exec $SHELL'"];
       GLib.spawn_command_line_async(cmd.join(" "));
       break;
     case "logs":
