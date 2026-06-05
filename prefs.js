@@ -7,6 +7,7 @@ import {
 } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
 
 import { makePrefCouterGroup } from "./src/prefPages/dockerPrefCounter.js";
+import { makePrefContainersGroup } from "./src/prefPages/dockerPrefContainers.js";
 import { makePrefDevcontainerGroup } from "./src/prefPages/dockerPrefDevcontainer.js";
 
 const DOCKER_LOG_COMMAND =
@@ -115,6 +116,7 @@ export default class DockerContainersPreferences extends ExtensionPreferences {
     const settings = this.getSettings();
     const page = new Adw.PreferencesPage();
     page.add(makePrefCouterGroup(settings));
+    page.add(makePrefContainersGroup(settings));
     page.add(makePrefDevcontainerGroup(settings));
 
     window.add(page);

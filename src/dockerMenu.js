@@ -15,6 +15,13 @@ import { DockerSubMenu } from "./dockerSubMenuMenuItem.js";
 
 const isContainerUp = (container) => container.status.indexOf("Up") > -1;
 
+const compareContainersByName = (a, b) => {
+  const nameCompare = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  if (nameCompare !== 0) return nameCompare;
+
+  return a.name.localeCompare(b.name);
+};
+
 // Docker icon as panel menu
 export const DockerMenu = GObject.registerClass(
   class DockerMenu extends panelMenu.Button {
@@ -33,7 +40,13 @@ export const DockerMenu = GObject.registerClass(
       this._counterEnabled = this.settings.get_boolean("counter-enabled");
       this._counterFontSize = this.settings.get_int("counter-font-size");
       this._refreshDelay = this.settings.get_int("refresh-delay");
+      this._sortContainersByName = this.settings.get_boolean("sort-containers-by-name");
       this.settings.connect("changed::refresh-delay", this._refreshCount);
+      this.settings.connect("changed::sort-containers-by-name", () => {
+        this._sortContainersByName = this.settings.get_boolean("sort-containers-by-name");
+        this._containers = null;
+        this._refreshMenu();
+      });
 
       // Custom Docker icon as menu button
       const hbox = new St.BoxLayout({ style_class: "panel-status-menu-box" });
@@ -108,6 +121,12 @@ export const DockerMenu = GObject.registerClass(
       this._refreshCount();
     }
 
+    _sortContainers(containers) {
+      if (!this._sortContainersByName) return containers;
+
+      return [...containers].sort(compareContainersByName);
+    }
+
     _updateCountLabel(count) {
       if (
         this._counterEnabled &&
@@ -125,7 +144,7 @@ export const DockerMenu = GObject.registerClass(
       if (!this.menu.isOpen) return;
       try {
         await this._check();
-        const containers = await Docker.getContainers();
+        const containers = this._sortContainers(await Docker.getContainers());
         this._updateCountLabel(
           containers.filter((container) => isContainerUp(container)).length
         );
