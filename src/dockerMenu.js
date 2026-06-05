@@ -4,22 +4,37 @@ import GLib from "gi://GLib";
 import St from "gi://St";
 import Gio from "gi://Gio";
 import GObject from "gi://GObject";
+import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import * as Docker from "./docker.js";
 import {
   PopupMenuItem,
   PopupMenuSection,
+  PopupSeparatorMenuItem,
 } from "resource:///org/gnome/shell/ui/popupMenu.js";
 import * as panelMenu from "resource:///org/gnome/shell/ui/panelMenu.js";
 import { getExtensionObject } from "../extension.js";
 import { DockerSubMenu } from "./dockerSubMenuMenuItem.js";
+import { DockerComposeSubMenu } from "./dockerComposeSubMenuMenuItem.js";
+import { groupComposeServices } from "./dockerComposeServices.js";
 
-const isContainerUp = (container) => container.status.indexOf("Up") > -1;
+const getContainerState = (container) => {
+  if (container.status.indexOf("Paused") > -1) return "paused";
+  if (container.status.indexOf("Up") > -1) return "running";
+  return "stopped";
+};
 
-const compareContainersByName = (a, b) => {
-  const nameCompare = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
-  if (nameCompare !== 0) return nameCompare;
+const isContainerUp = (container) => getContainerState(container) === "running";
 
-  return a.name.localeCompare(b.name);
+const compareStrings = (a, b) => {
+  const baseCompare = a.localeCompare(b, undefined, { sensitivity: "base" });
+  if (baseCompare !== 0) return baseCompare;
+
+  return a.localeCompare(b);
+};
+
+const compareContainers = (a, b) => {
+
+  return compareStrings(a.devcontainer?.name ?? a.name, b.devcontainer?.name ?? b.name);
 };
 
 // Docker icon as panel menu
@@ -31,7 +46,13 @@ export const DockerMenu = GObject.registerClass(
       this._refreshMenu = this._refreshMenu.bind(this);
       this._feedMenu = this._feedMenu.bind(this);
       this._updateCountLabel = this._updateCountLabel.bind(this);
+      this._syncScrollViewMaxHeight = this._syncScrollViewMaxHeight.bind(this);
+      this._syncScrollbarPolicy = this._syncScrollbarPolicy.bind(this);
+      this._scheduleScrollbarPolicySync = this._scheduleScrollbarPolicySync.bind(this);
       this._timeout = null;
+      this._startupRefreshId = null;
+      this._scrollbarPolicyTimeoutId = null;
+      this._maxScrollHeight = 0;
       this._destroyed = false;
       this.settings = getExtensionObject().getSettings(
         "org.gnome.shell.extensions.easy_docker_containers"
@@ -40,10 +61,10 @@ export const DockerMenu = GObject.registerClass(
       this._counterEnabled = this.settings.get_boolean("counter-enabled");
       this._counterFontSize = this.settings.get_int("counter-font-size");
       this._refreshDelay = this.settings.get_int("refresh-delay");
-      this._sortContainersByName = this.settings.get_boolean("sort-containers-by-name");
+      this._groupComposeServices = this.settings.get_boolean("group-compose-services");
       this.settings.connect("changed::refresh-delay", this._refreshCount);
-      this.settings.connect("changed::sort-containers-by-name", () => {
-        this._sortContainersByName = this.settings.get_boolean("sort-containers-by-name");
+      this.settings.connect("changed::group-compose-services", () => {
+        this._groupComposeServices = this.settings.get_boolean("group-compose-services");
         this._containers = null;
         this._refreshMenu();
       });
@@ -73,32 +94,44 @@ export const DockerMenu = GObject.registerClass(
 
       this.add_child(hbox);
 
-      const scrollView = new St.ScrollView();
+      this._scrollView = new St.ScrollView({
+        hscrollbar_policy: St.PolicyType.NEVER,
+        vscrollbar_policy: St.PolicyType.NEVER,
+        overlay_scrollbars: true,
+        enable_mouse_scrolling: true,
+        style_class: "vfade",
+      });
       this.menu._section = new PopupMenuSection();
-      if (scrollView.add_actor) {
-        scrollView.add_actor(this.menu._section.actor);
+      this.menu._section.actor.connect(
+        "notify::height",
+        this._scheduleScrollbarPolicySync
+      );
+      if (this._scrollView.add_actor) {
+        this._scrollView.add_actor(this.menu._section.actor);
       } else {
-        scrollView.add_child(this.menu._section.actor);
+        this._scrollView.add_child(this.menu._section.actor);
       }
-      this.menu.box.add_child(scrollView);
+      this.menu.box.add_child(this._scrollView);
 
-      this.menu.connect("open-state-changed", this._refreshMenu.bind(this));
+      this.menu.connect("open-state-changed", (_menu, open) => {
+        if (open) this._syncScrollViewMaxHeight();
+        this._refreshMenu();
+      });
 
       this.menu._section.addMenuItem(new PopupMenuItem(loading));
 
-      // Defer the first docker ps call by 5 s so it does not compete with
-      // GNOME Shell's own startup work. The counter will show "Loading…" until
-      // the timeout fires, which is preferable to stalling the shell.
-      this._timeout = GLib.timeout_add_seconds(
-        GLib.PRIORITY_DEFAULT_IDLE,
-        5,
-        () => {
-          this._timeout = null;
-          if (!this._destroyed)
-            this._refreshCount();
-          return GLib.SOURCE_REMOVE;
-        }
-      );
+      if (this._counterEnabled && this._refreshDelay > 0 && this._counterFontSize > 0) {
+        this._startupRefreshId = GLib.timeout_add_seconds(
+          GLib.PRIORITY_LOW,
+          5,
+          () => {
+            this._startupRefreshId = null;
+            if (!this._destroyed)
+              this._refreshCount();
+            return GLib.SOURCE_REMOVE;
+          }
+        );
+      }
       if (Docker.hasPodman() || Docker.hasDocker()) {
         this.show();
       }
@@ -112,6 +145,15 @@ export const DockerMenu = GObject.registerClass(
     destroy() {
       this._destroyed = true;
       this.clearLoop();
+      if (this._startupRefreshId) {
+        GLib.source_remove(this._startupRefreshId);
+        this._startupRefreshId = null;
+      }
+
+      if (this._scrollbarPolicyTimeoutId) {
+        GLib.source_remove(this._scrollbarPolicyTimeoutId);
+        this._scrollbarPolicyTimeoutId = null;
+      }
       super.destroy();
     }
 
@@ -121,10 +163,93 @@ export const DockerMenu = GObject.registerClass(
       this._refreshCount();
     }
 
-    _sortContainers(containers) {
-      if (!this._sortContainersByName) return containers;
+    _syncScrollViewMaxHeight() {
+      if (!this._scrollView) return;
 
-      return [...containers].sort(compareContainersByName);
+      const monitorIndex = Main.layoutManager.findIndexForActor(this);
+      const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
+      const workAreaBottom = workArea.y + workArea.height;
+      const edgePadding = 12;
+      const fallbackTop = workArea.y + 32;
+      const [, scrollTop] = this._scrollView.get_transformed_position();
+      const scrollViewTop = Number.isFinite(scrollTop) && scrollTop > workArea.y
+        ? scrollTop
+        : fallbackTop;
+      const maxHeight = Math.max(
+        1,
+        Math.floor(workAreaBottom - scrollViewTop - edgePadding)
+      );
+
+      this._maxScrollHeight = maxHeight;
+      this._scrollView.style = `max-height: ${maxHeight}px;`;
+    }
+
+    _syncScrollbarPolicy() {
+      if (!this._scrollView || !this.menu._section?.actor) return;
+
+      this._syncScrollViewMaxHeight();
+
+      const [, naturalHeight] = this.menu._section.actor.get_preferred_height(-1);
+      const needsScrollbar =
+        this._maxScrollHeight > 0 && naturalHeight > this._maxScrollHeight;
+
+      this._scrollView.set_overlay_scrollbars(!needsScrollbar);
+      this._scrollView.vscrollbar_policy = needsScrollbar
+        ? St.PolicyType.AUTOMATIC
+        : St.PolicyType.NEVER;
+      this._scrollView.set_height(needsScrollbar ? this._maxScrollHeight : -1);
+    }
+
+    _scheduleScrollbarPolicySync() {
+      if (this._destroyed || !this._scrollView) return;
+
+      if (this._scrollbarPolicyTimeoutId)
+        GLib.source_remove(this._scrollbarPolicyTimeoutId);
+
+      this._scrollbarPolicyTimeoutId = GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT_IDLE,
+        300,
+        () => {
+          this._scrollbarPolicyTimeoutId = null;
+          if (!this._destroyed)
+            this._syncScrollbarPolicy();
+          return GLib.SOURCE_REMOVE;
+        }
+      );
+    }
+
+    _sortContainers(containers) {
+      return [...containers].sort(compareContainers);
+    }
+
+    _getContainerMenuItems(containers, closePopup) {
+      return containers.map((container) =>
+        new DockerSubMenu(
+          container.compose,
+          container.devcontainer,
+          container.name,
+          container.status,
+          this.menu,
+          closePopup
+        )
+      );
+    }
+
+    _getGroupedMenuItems(containers, closePopup) {
+      const { grouped, devcontainers, singles } = groupComposeServices(containers);
+      const items = [];
+
+      const addGroup = (groupItems) => {
+        if (groupItems.length === 0) return;
+        if (items.length > 0) items.push(new PopupSeparatorMenuItem());
+        items.push(...groupItems);
+      };
+
+      addGroup(grouped.map((group) => new DockerComposeSubMenu(group, this.menu, closePopup)));
+      addGroup(this._getContainerMenuItems(singles, closePopup));
+      addGroup(this._getContainerMenuItems(devcontainers, closePopup));
+
+      return items;
     }
 
     _updateCountLabel(count) {
@@ -229,6 +354,7 @@ export const DockerMenu = GObject.registerClass(
       const anyRecreating = Docker.hasAnyRecreating();
       if (
         anyRecreating !== this._anyRecreating ||
+        this._groupComposeServices !== this._lastGroupComposeServices ||
         anyRecreating ||
         !this._containers ||
         dockerContainers.length !== this._containers.length ||
@@ -238,31 +364,39 @@ export const DockerMenu = GObject.registerClass(
           return (
             currContainer.project !== container.project ||
             currContainer.name !== container.name ||
+            getContainerState(currContainer) !== getContainerState(container) ||
+            currContainer.compose?.service !== container.compose?.service ||
+            currContainer.compose?.project !== container.compose?.project ||
+            currContainer.compose?.configFiles !== container.compose?.configFiles ||
+            currContainer.compose?.workingDir !== container.compose?.workingDir ||
             currContainer.devcontainer?.name !== container.devcontainer?.name ||
             currContainer.devcontainer?.localFolder !==
-            container.devcontainer?.localFolder ||
-            isContainerUp(currContainer) !== isContainerUp(container)
+            container.devcontainer?.localFolder
           );
         })
       ) {
         this._anyRecreating = anyRecreating;
+        this._lastGroupComposeServices = this._groupComposeServices;
         this.menu._section.removeAll();
         this._containers = dockerContainers;
-        this._containers.forEach((container) => {
-          const subMenu = new DockerSubMenu(
-            container.compose,
-            container.devcontainer,
-            container.name,
-            container.status,
-            this.menu,
-            () => {
-              this.menu.close();
-            }
-          );
-          const scrollView = subMenu.menu.actor;
-          scrollView.set_mouse_scrolling(false);
-          scrollView.set_overlay_scrollbars(false);
-          this.menu._section.addMenuItem(subMenu);
+        const closePopup = () => {
+          this.menu.close();
+        };
+        const menuItems = this._groupComposeServices
+          ? this._getGroupedMenuItems(this._containers, closePopup)
+          : this._getContainerMenuItems(this._containers, closePopup);
+
+        menuItems.forEach((item) => {
+          if (item.menu) {
+            const scrollView = item.menu.actor;
+            scrollView.set_mouse_scrolling(false);
+            scrollView.set_overlay_scrollbars(true);
+            item.menu.connect(
+              "open-state-changed",
+              this._scheduleScrollbarPolicySync
+            );
+          }
+          this.menu._section.addMenuItem(item);
         });
 
         if (!this._containers.length) {
@@ -270,6 +404,8 @@ export const DockerMenu = GObject.registerClass(
             new PopupMenuItem("No containers detected")
           );
         }
+
+        this._syncScrollbarPolicy();
       }
     }
   }

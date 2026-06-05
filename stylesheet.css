@@ -1,17 +1,29 @@
 /* Container icon colors */
 
 .status-undefined {
-	color: #9e9e9e;
+    color: #9e9e9e;
 }
 
 .status-stopped {
-	color: #ff3d00;
+    color: #ff3d00;
 }
 
 .status-running {
-	color: #00c853;
+    color: #00c853;
+}
+
+.status-compose-stopped {
+    color: #ff3d00;
+}
+
+.status-compose-partial {
+    color: #ffab00;
+}
+
+.status-compose-running {
+    color: #00c853;
 }
 
 .status-paused {
-	color: #00b0ff;
+    color: #00b0ff;
 }

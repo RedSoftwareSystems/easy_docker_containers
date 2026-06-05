@@ -1,4 +1,4 @@
-# Docker Containers
+# Easy Docker Containers
 
 This file contains in one place all the required data of the GNOME Shell extension for extensions.gnome.org website to make perfect control of them and keep it in every aspect the up-to-date extraction of main README document.
 
@@ -23,6 +23,10 @@ A GNOME Shell extension (GNOME Panel applet) to be able to generally control you
 
 The following actions are available from the GNOME Panel menu per Docker container:
 
+- START (COMPOSE) (Will start the services of the related compose project when available.)
+- STOP (COMPOSE) (Will stop the services of the related compose project when available.)
+- PAUSE (COMPOSE) (Will pause the services of the related compose project when available.)
+- RESTART (COMPOSE) (Will restart the services of the related compose project when available.)
 - START (Will start the container.)
 - STOP (Will stop the container.)
 - PAUSE (Will pause the container.)
@@ -30,10 +34,45 @@ The following actions are available from the GNOME Panel menu per Docker contain
 - EXEC (Will login to the running container interactively through your default terminal application.)
 - LOGS (Will start the running container's Docker logs in your default terminal application.)
 
+----- MENU ORGANIZATION PREFERENCES -----
+
+Container entries are sorted automatically, with running containers before stopped containers and names sorted alphabetically within each state.
+
+The extension preferences include container display options:
+
+- GROUP DOCKER COMPOSE SERVICES (Shows one compose menu per compose file, with compose-level actions and a Services submenu for individual containers.)
+
+When Docker Compose grouping is enabled, compose entries show the compose project name with a compose-specific icon, plus a running/total services count in the Services submenu. Running or partially running compose groups appear before fully stopped groups.
+
+----- DEVCONTAINER SUPPORT -----
+
+When a stopped container was created from a Dev Container workspace (i.e. the workspace folder contains a .devcontainer/devcontainer.json), the extension shows additional information and actions:
+
+- The devcontainer name (from devcontainer.json) is displayed as a subtitle under the container entry.
+- The workspace folder path is shown as a clickable item — clicking it opens a terminal at that folder.
+- START (Runs devcontainer up --workspace-folder <path> to start the container and apply all lifecycle commands.)
+- RECREATE AND START (Runs devcontainer up --remove-existing-container --workspace-folder <path> to destroy the existing container and create a fresh one from the image.)
+
+For running devcontainers, an additional action is available:
+
+- OPEN IN IDE (Runs the configured IDE command to attach your editor to the running container.)
+
+These actions require the devcontainer CLI to be installed and reachable on PATH (including version-manager-managed paths such as NVM or pyenv): https://github.com/devcontainers/cli
+
+Open in IDE command:
+
+Configure a shell command in the extension preferences (Devcontainer -> Open in IDE command) to attach your editor to a devcontainer. The command is triggered in two situations:
+
+- Clicking OPEN IN IDE on any running devcontainer.
+- Automatically after a successful RECREATE AND START (since recreation replaces the container ID, causing IDEs to lose their connection).
+
+Use %workspaceFolder% as a placeholder for the workspace folder path. Leave the field empty to skip this step entirely.
+
 ----- PREREQUISITE -----
 
 1. Properly installed and already running Docker service.
 2. Corresponding Linux user in `docker` Linux group for manage 'Docker' without `sudo` permission.
+3. (Devcontainer features only) devcontainer CLI installed and on PATH.
 
 ----- CREDITS -----
 

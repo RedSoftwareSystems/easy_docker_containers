@@ -11,9 +11,9 @@ export function makePrefContainersGroup(settings) {
   libs.makeSwitch({
     parent,
     settings,
-    title: _("Sort by name"),
-    subtitle: _("Show containers alphabetically in the menu"),
-    settingsProperty: "sort-containers-by-name",
+    title: _("Group containers by type"),
+    subtitle: _("Separate containers into Docker Compose projects, single instances, and devcontainers — each group divided by a separator"),
+    settingsProperty: "group-compose-services",
   });
 
   return parent;

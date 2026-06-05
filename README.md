@@ -21,6 +21,16 @@ The following actions are available from the GNOME Panel menu per Docker contain
 - **Exec** _(Will login to the running container interactively through your default terminal application.)_
 - **Logs** _(Will start the running container's Docker logs in your default terminal application.)_
 
+### Menu organization preferences
+
+Container entries are sorted automatically, with running containers before stopped containers and names sorted alphabetically within each state.
+
+The extension preferences include container display options:
+
+- **Group Docker Compose services** _(Shows one compose menu per compose file, with compose-level actions and a **Services** submenu for individual containers.)_
+
+When Docker Compose grouping is enabled, compose entries show the compose project name with a compose-specific icon, plus a running/total services count in the **Services** submenu. Running or partially running compose groups appear before fully stopped groups.
+
 ### Devcontainer support
 
 When a stopped container was created from a [Dev Container](https://containers.dev/) workspace (i.e. the workspace folder contains a `.devcontainer/devcontainer.json`), the extension shows additional information and actions:
@@ -32,7 +42,7 @@ When a stopped container was created from a [Dev Container](https://containers.d
 
 For **running** devcontainers, an additional action is available:
 
-- **Open in IDE** _(Runs the configured IDE command to attach your editor to the running container — see [IDE command](#post-recreate-command-ide-reattachment) below.)_
+- **Open in IDE** _(Runs the configured IDE command to attach your editor to the running container — see [IDE command](#open-in-ide-command) below.)_
 
 > **Note:** these actions require the [`devcontainer` CLI](https://github.com/devcontainers/cli) to be installed and reachable on `PATH` (including version-manager-managed paths such as NVM or pyenv).
 
@@ -48,7 +58,7 @@ Use `%workspaceFolder%` as a placeholder for the workspace folder path. Examples
 | IDE | Command |
 |-----|---------|
 | VS Code / Cursor | `code --folder-uri "vscode-remote://dev-container+$(printf '%s' '%workspaceFolder%' \| od -An -tx1 \| tr -dc '[:xdigit:]')/workspaceFolder"` |
-| Zed | `zed %workspaceFolder%` _(Zed detects the devcontainer and prompts to reopen)_ |
+| Zed | `zed -n --dev-container %workspaceFolder%` _(Zed detects the devcontainer and prompts to reopen)_ |
 | IntelliJ / JetBrains | No CLI hook available — reconnect manually from inside the IDE. |
 
 Leave the field empty to skip this step entirely.

@@ -1,8 +1,8 @@
 "use strict";
 
+import Atk from "gi://Atk";
 import Clutter from "gi://Clutter";
 import St from "gi://St";
-import Gio from "gi://Gio";
 import GObject from "gi://GObject";
 import { Spinner } from "resource:///org/gnome/shell/ui/animation.js";
 import {
@@ -12,29 +12,7 @@ import {
 } from "resource:///org/gnome/shell/ui/popupMenu.js";
 import { DockerMenuItem, DevcontainerStartMenuItem, DevcontainerRecreateMenuItem, DevcontainerOpenInIDEMenuItem } from "./dockerMenuItem.js";
 import * as Docker from "./docker.js";
-import { getExtensionObject } from "../extension.js";
-
-/**
- * Create Gio.icon based St.Icon
- *
- * @param {String} name The name of the icon (filename without extension)
- * @param {String} styleClass The style of the icon
- *
- * @return {Object} an St.Icon instance
- */
-const gioIcon = (name = "docker-container-unavailable-symbolic") =>
-  Gio.icon_new_for_string(
-    getExtensionObject().path + "/icons/" + name + ".svg"
-  );
-const menuIcon = (
-  name = "docker-container-unavailable-symbolic",
-  styleClass = "system-status-icon"
-) =>
-  new St.Icon({
-    gicon: gioIcon(name),
-    style_class: styleClass,
-    icon_size: "16",
-  });
+import { menuIcon } from "./dockerMenuIcons.js";
 
 /**
  * Get the status of a container from the status message obtained with the docker command
@@ -51,8 +29,8 @@ const getStatus = (statusMessage) => {
   return status;
 };
 
-const getMenuLabel = (compose, containerName) =>
-  compose ? `${compose.project} ∘ ${compose.service}` : containerName;
+const getMenuLabel = (compose, containerName, labelOverride = null) =>
+  labelOverride || (compose ? `${compose.project} ∘ ${compose.service}` : containerName);
 
 // Menu entry representing a Docker container
 export const DockerSubMenu = GObject.registerClass(
@@ -63,10 +41,15 @@ export const DockerSubMenu = GObject.registerClass(
       containerName,
       containerStatusMessage,
       parentMenu,
-      closePopup
+      closePopup,
+      labelOverride = null,
+      nested = false,
+      nestedOwner = null
     ) {
-      super._init(getMenuLabel(compose, containerName));
+      super._init(getMenuLabel(compose, containerName, labelOverride));
       this._parentMenu = parentMenu;
+      this._nested = nested;
+      this._nestedOwner = nestedOwner;
 
       // Store data needed for re-rendering the recreating state later.
       this._devcontainer = devcontainer;
@@ -280,7 +263,7 @@ export const DockerSubMenu = GObject.registerClass(
             this.menu.addMenuItem(
               new DockerMenuItem(
                 containerName,
-                ["compose unpause"],
+                ["compose unpause", ...composeParams],
                 menuIcon("docker-container-start-symbolic"),
                 closePopup
               )
@@ -374,6 +357,25 @@ export const DockerSubMenu = GObject.registerClass(
           this._closePopup
         )
       );
+    }
+
+    _subMenuOpenStateChanged(menu, open) {
+      if (!this._nested) {
+        super._subMenuOpenStateChanged(menu, open);
+        return;
+      }
+
+      if (open) {
+        this.add_style_pseudo_class("open");
+        this._nestedOwner?._setOpenedSubMenu(menu);
+        this.add_accessible_state(Atk.StateType.EXPANDED);
+        this.add_style_pseudo_class("checked");
+      } else {
+        this.remove_style_pseudo_class("open");
+        this._nestedOwner?._setOpenedSubMenu(null, menu);
+        this.remove_accessible_state(Atk.StateType.EXPANDED);
+        this.remove_style_pseudo_class("checked");
+      }
     }
 
     _getTopMenu() {

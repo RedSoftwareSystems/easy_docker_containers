@@ -8,9 +8,9 @@ import * as Docker from "./docker.js";
 // Docker actions for each container
 export const DockerMenuItem = GObject.registerClass(
   class DockerMenuItem extends PopupMenuItem {
-    _init(containerName, dockerCommand, icon, closePopup) {
+    _init(containerName, dockerCommand, icon, closePopup, labelOverride = null) {
       const commandName = [dockerCommand].flat()[0];
-      super._init(Docker.dockerCommandsToLabels[commandName]);
+      super._init(labelOverride || Docker.dockerCommandsToLabels[commandName]);
       this._closePopup = closePopup;
 
       if (icon) {

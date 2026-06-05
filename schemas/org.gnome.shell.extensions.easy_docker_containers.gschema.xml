@@ -17,10 +17,10 @@
     <key name="counter-enabled" type="b">
        <default>true</default>
     </key>
-    <key name="sort-containers-by-name" type="b">
-      <default>false</default>
-      <summary>Sort containers by name</summary>
-      <description>When enabled, containers are shown alphabetically by name in the menu.</description>
+    <key name="group-compose-services" type="b">
+      <default>true</default>
+      <summary>Group Docker Compose services</summary>
+      <description>When enabled, services from the same compose file are grouped under one compose menu with a Services submenu.</description>
     </key>
     <key name="devcontainer-ide-command" type="s">
       <default>''</default>
