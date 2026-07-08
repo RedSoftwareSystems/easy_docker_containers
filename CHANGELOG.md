@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
-## [34] - 2026-06-05
+## [34] - 2026-07-08
 
 ### Added
 
@@ -11,8 +11,7 @@ All notable changes to this project will be documented in this file. _(The forma
 
 ### Changed
 
-- Sort container menu entries automatically, with running containers before stopped containers and names sorted alphabetically within each state.
-- Sort grouped Compose entries automatically, with running or partially running groups before fully stopped groups and compose names sorted alphabetically within each state.
+- Organize the container menu into groups separated by dividers: Docker Compose projects first, then standalone containers, then Dev Container workspaces.
 - Enable Docker Compose service grouping by default.
 - Constrain the container menu height to the active monitor work area and show scrollbars only when needed.
 
