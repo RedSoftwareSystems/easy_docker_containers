@@ -1,14 +1,9 @@
 "use strict";
 
+import { compareStrings } from "./stringUtils.js";
+
 const isContainerUp = (container) =>
   container.status.indexOf("Paused") === -1 && container.status.indexOf("Up") > -1;
-
-const compareStrings = (a, b) => {
-  const baseCompare = a.localeCompare(b, undefined, { sensitivity: "base" });
-  if (baseCompare !== 0) return baseCompare;
-
-  return a.localeCompare(b);
-};
 
 const compareStatus = (a, b) => Number(isContainerUp(b)) - Number(isContainerUp(a));
 
