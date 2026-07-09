@@ -16,6 +16,7 @@ import { getExtensionObject } from "../extension.js";
 import { DockerSubMenu } from "./dockerSubMenuMenuItem.js";
 import { DockerComposeSubMenu } from "./dockerComposeSubMenuMenuItem.js";
 import { groupComposeServices } from "./dockerComposeServices.js";
+import { compareStrings } from "./stringUtils.js";
 
 const getContainerState = (container) => {
   if (container.status.indexOf("Paused") > -1) return "paused";
@@ -24,13 +25,6 @@ const getContainerState = (container) => {
 };
 
 const isContainerUp = (container) => getContainerState(container) === "running";
-
-const compareStrings = (a, b) => {
-  const baseCompare = a.localeCompare(b, undefined, { sensitivity: "base" });
-  if (baseCompare !== 0) return baseCompare;
-
-  return a.localeCompare(b);
-};
 
 const compareContainers = (a, b) => {
 
@@ -163,10 +157,24 @@ export const DockerMenu = GObject.registerClass(
       this._refreshCount();
     }
 
+    // Scroll handling has three cooperating pieces:
+    //   _syncScrollViewMaxHeight   -> computes the cap (max-height) so the menu
+    //                                 never spills below the monitor work area.
+    //   _syncScrollbarPolicy       -> decides whether a scrollbar is needed by
+    //                                 comparing content height against that cap.
+    //   _scheduleScrollbarPolicySync -> debounces policy syncs, since submenu
+    //                                 open/close and height changes fire rapidly.
+
+    // Compute the tallest the scroll view may become before it would extend past
+    // the bottom of the monitor's work area, and apply it as a max-height.
     _syncScrollViewMaxHeight() {
       if (!this._scrollView) return;
 
-      const monitorIndex = Main.layoutManager.findIndexForActor(this);
+      // findIndexForActor returns -1 when the actor isn't mapped to a monitor
+      // yet; fall back to the primary monitor so getWorkAreaForMonitor won't throw.
+      const foundIndex = Main.layoutManager.findIndexForActor(this);
+      const monitorIndex =
+        foundIndex < 0 ? Main.layoutManager.primaryIndex : foundIndex;
       const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
       const workAreaBottom = workArea.y + workArea.height;
       const edgePadding = 12;
@@ -184,6 +192,8 @@ export const DockerMenu = GObject.registerClass(
       this._scrollView.style = `max-height: ${maxHeight}px;`;
     }
 
+    // Enable the scrollbar (and pin the height to the cap) only when the content
+    // is actually taller than the available space; otherwise let it size freely.
     _syncScrollbarPolicy() {
       if (!this._scrollView || !this.menu._section?.actor) return;
 
@@ -200,6 +210,8 @@ export const DockerMenu = GObject.registerClass(
       this._scrollView.set_height(needsScrollbar ? this._maxScrollHeight : -1);
     }
 
+    // Debounce policy syncs: height notifications and submenu open/close events
+    // arrive in bursts, so coalesce them into a single deferred sync.
     _scheduleScrollbarPolicySync() {
       if (this._destroyed || !this._scrollView) return;
 

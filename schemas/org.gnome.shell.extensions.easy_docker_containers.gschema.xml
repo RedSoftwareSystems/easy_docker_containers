@@ -19,8 +19,8 @@
     </key>
     <key name="group-compose-services" type="b">
       <default>true</default>
-      <summary>Group Docker Compose services</summary>
-      <description>When enabled, services from the same compose file are grouped under one compose menu with a Services submenu.</description>
+      <summary>Group containers by type</summary>
+      <description>When enabled, containers are separated into Docker Compose projects, single instances, and devcontainers, each group divided by a separator. Compose services from the same compose file are grouped under one compose menu with a Services submenu.</description>
     </key>
     <key name="devcontainer-ide-command" type="s">
       <default>''</default>

@@ -72,7 +72,7 @@ Use %workspaceFolder% as a placeholder for the workspace folder path. Leave the 
 
 1. Properly installed and already running Docker service.
 2. Corresponding Linux user in `docker` Linux group for manage 'Docker' without `sudo` permission.
-3. (Devcontainer features only) devcontainer CLI installed and on PATH.
+3. (Dev Container features only) the devcontainer CLI installed and on PATH.
 
 ----- CREDITS -----
 
