@@ -1,6 +1,6 @@
 # Easy Docker Containers
 
-A GNOME Shell extension _(GNOME Panel applet)_ to be able to generally control your available Docker containers.
+A GNOME Shell extension _(GNOME Panel applet)_ to be able to generally control your available Docker containers, as single instances, compose instances and dev containers.
 
 ## Screenshot
 
