@@ -8,7 +8,7 @@ https://github.com/RedSoftwareSystems/easy_docker_containers
 
 ## Icon [^1]
 
-<img src="./resources/extensions.gnome.org.png" alt="Screenshot" style="zoom:50%;" />
+<img src="./resources/screenshot.png" alt="Screenshot" style="zoom:50%;" />
 
 ## Screenshot
 
@@ -36,13 +36,13 @@ The following actions are available from the GNOME Panel menu per Docker contain
 
 ----- MENU ORGANIZATION PREFERENCES -----
 
-Container entries are sorted automatically, with running containers before stopped containers and names sorted alphabetically within each state.
+Container entries are sorted automatically, with running containers before stopped containers and names sorted alphabetically within each state. The menu height is constrained to the active monitor's work area, and scrollbars appear only when the list is too long to fit on screen.
 
-The extension preferences include container display options:
+The extension preferences include a container display option:
 
-- GROUP DOCKER COMPOSE SERVICES (Shows one compose menu per compose file, with compose-level actions and a Services submenu for individual containers.)
+- GROUP CONTAINERS BY TYPE (Separates containers into Docker Compose projects, single instances, and devcontainers — each group divided by a separator. Enabled by default.)
 
-When Docker Compose grouping is enabled, compose entries show the compose project name with a compose-specific icon, plus a running/total services count in the Services submenu. Running or partially running compose groups appear before fully stopped groups.
+When this option is enabled, the menu is organized into sections divided by separators: Docker Compose projects first, then standalone containers, and finally Dev Container workspaces. Each compose file is collected under a single compose menu that shows the compose project name with a compose-specific icon and a running/total service count, exposes compose-level actions (start, stop, pause, restart) for the whole project, and provides a Services submenu for the individual containers. Running or partially running compose groups appear before fully stopped groups.
 
 ----- DEVCONTAINER SUPPORT -----
 
@@ -66,7 +66,13 @@ Configure a shell command in the extension preferences (Devcontainer -> Open in 
 - Clicking OPEN IN IDE on any running devcontainer.
 - Automatically after a successful RECREATE AND START (since recreation replaces the container ID, causing IDEs to lose their connection).
 
-Use %workspaceFolder% as a placeholder for the workspace folder path. Leave the field empty to skip this step entirely.
+Use %workspaceFolder% as a placeholder for the workspace folder path. Examples:
+
+- VS Code / Cursor: code --folder-uri "vscode-remote://dev-container+$(printf '%s' '%workspaceFolder%' | od -An -tx1 | tr -dc '[:xdigit:]')/workspaceFolder"
+- Zed: zed %workspaceFolder% (Zed detects the devcontainer on open and prompts to reopen)
+- IntelliJ / JetBrains: No CLI hook available — reconnect manually from inside the IDE.
+
+Leave the field empty to skip this step entirely.
 
 ----- PREREQUISITE -----
 
