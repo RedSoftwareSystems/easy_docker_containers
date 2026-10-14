@@ -27,5 +27,17 @@
       <summary>Command to open a devcontainer in the configured IDE</summary>
       <description>Shell command executed when "Open in IDE" is clicked on a running devcontainer, and automatically after a successful recreate. Use %workspaceFolder% as a placeholder for the workspace path.</description>
     </key>
+    <key name="panel-box" type="i">
+      <range min="0" max="2"/>
+      <default>2</default>
+      <summary>Top bar area of the panel icon</summary>
+      <description>Top bar area where the panel icon is shown: 0 = left, 1 = center, 2 = right.</description>
+    </key>
+    <key name="panel-index" type="i">
+      <range min="0" max="20"/>
+      <default>0</default>
+      <summary>Position of the panel icon in its top bar area</summary>
+      <description>Index of the panel icon among the other items of its top bar area. 0 is the first (leftmost) position.</description>
+    </key>
   </schema>
 </schemalist>
