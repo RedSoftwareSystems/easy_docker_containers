@@ -9,6 +9,7 @@ import {
 import { makePrefCouterGroup } from "./src/prefPages/dockerPrefCounter.js";
 import { makePrefContainersGroup } from "./src/prefPages/dockerPrefContainers.js";
 import { makePrefDevcontainerGroup } from "./src/prefPages/dockerPrefDevcontainer.js";
+import { makePrefPanelIconGroup } from "./src/prefPages/dockerPrefPanelIcon.js";
 
 const DOCKER_LOG_COMMAND =
   "'docker logs -f --tail 2000 %containerName%; exec $SHELL'";
@@ -115,6 +116,7 @@ export default class DockerContainersPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
     const settings = this.getSettings();
     const page = new Adw.PreferencesPage();
+    page.add(makePrefPanelIconGroup(settings));
     page.add(makePrefCouterGroup(settings));
     page.add(makePrefContainersGroup(settings));
     page.add(makePrefDevcontainerGroup(settings));
