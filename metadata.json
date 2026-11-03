@@ -3,7 +3,7 @@
   "uuid": "easy_docker_containers@red.software.systems",
   "description": "A GNOME Shell extension (GNOME Panel applet) to be able to generally control your available Docker containers.",
   "url": "https://github.com/RedSoftwareSystems/easy_docker_containers",
-  "version": 35,
+  "version": 36,
   "settings-schema": "org.gnome.shell.extensions.easy_docker_containers",
   "shell-version": [
     "45",
@@ -11,6 +11,7 @@
     "47",
     "48",
     "49",
-    "50"
+    "50",
+    "51"
   ]
 }
