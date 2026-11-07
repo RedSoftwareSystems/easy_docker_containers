@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [Unreleased]
+
+### Added
+
+- Add preferences to choose the top bar area (left, center or right) and the position of the panel icon in that area. Changes apply immediately.
+
 ## [36] - 2026-11-03
 
 Added GNOME 51 support
