@@ -44,6 +44,15 @@ The extension preferences include a container display option:
 
 When this option is enabled, the menu is organized into sections divided by separators: Docker Compose projects first, then standalone containers, and finally Dev Container workspaces. Each compose file is collected under a single compose menu that shows the compose project name with a compose-specific icon and a running/total service count, exposes compose-level actions (start, stop, pause, restart) for the whole project, and provides a Services submenu for the individual containers. Running or partially running compose groups appear before fully stopped groups.
 
+----- PANEL ICON POSITION -----
+
+The extension preferences include a Panel Icon group to choose where the Docker icon is shown in the top bar:
+
+- TOP BAR AREA (Left, Center or Right. Right by default.)
+- POSITION IN AREA (Index of the icon among the other items of the area, 0 being the first. 0 by default.)
+
+Changes apply immediately, without restarting GNOME Shell.
+
 ----- DEVCONTAINER SUPPORT -----
 
 When a stopped container was created from a Dev Container workspace (i.e. the workspace folder contains a .devcontainer/devcontainer.json), the extension shows additional information and actions:

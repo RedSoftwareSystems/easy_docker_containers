@@ -100,8 +100,9 @@ Leave the field empty to skip this step entirely.
 - [Tamas-Toth-ebola](https://github.com/Tamas-Toth-ebola)
 - [jacobfogg](https://github.com/jacobfogg)
 - [albeto001](https://github.com/albeto001)
-- [pierreavizou] (https://github.com/pierreavizou)
-- [hhoao] (https://github.com/hhoao)
+- [pierreavizou](https://github.com/pierreavizou)
+- [hhoao](https://github.com/hhoao)
+- [vgalisson](https://github.com/vgalisson) _(panel icon position preferences)_
 
 ## Credits
 
