@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [37] - 2026-11-25
+
+### Fixed
+
+- Fix "No property vertical on StBoxLayout" error on GNOME 51, where the deprecated `vertical` property of `St.BoxLayout` was removed. The devcontainer name label now uses `orientation` when available and falls back to `vertical` on older GNOME versions.
+
+### Changed
+
+- The extension package now contains only the files needed at runtime (documentation and screenshots are excluded), reducing its size from about 2.7 MB to about 50 KB.
+
 ## [36] - 2026-11-03
 
 Added GNOME 51 support

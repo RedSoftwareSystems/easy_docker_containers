@@ -387,10 +387,15 @@ export const DockerSubMenu = GObject.registerClass(
 
       const labelIndex = this.get_children().indexOf(this.label);
       const labelBox = new St.BoxLayout({
-        vertical: true,
         x_expand: true,
         y_align: Clutter.ActorAlign.CENTER,
       });
+      // GNOME 48+ uses `orientation` (`vertical` was removed in GNOME 51);
+      // GNOME 45-47 only know `vertical`.
+      if ("orientation" in labelBox)
+        labelBox.orientation = Clutter.Orientation.VERTICAL;
+      else
+        labelBox.vertical = true;
       const devcontainerLabel = new St.Label({
         text: devcontainerName,
         style: "font-size: 80%; font-style: italic;",
