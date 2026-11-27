@@ -56,12 +56,12 @@ export const DockerMenu = GObject.registerClass(
       this._counterFontSize = this.settings.get_int("counter-font-size");
       this._refreshDelay = this.settings.get_int("refresh-delay");
       this._groupComposeServices = this.settings.get_boolean("group-compose-services");
-      this.settings.connect("changed::refresh-delay", this._refreshCount);
-      this.settings.connect("changed::group-compose-services", () => {
+      this.settings.connectObject("changed::refresh-delay", this._refreshCount, this);
+      this.settings.connectObject("changed::group-compose-services", () => {
         this._groupComposeServices = this.settings.get_boolean("group-compose-services");
         this._containers = null;
         this._refreshMenu();
-      });
+      }, this);
 
       // Custom Docker icon as menu button
       const hbox = new St.BoxLayout({ style_class: "panel-status-menu-box" });
@@ -96,9 +96,10 @@ export const DockerMenu = GObject.registerClass(
         style_class: "vfade",
       });
       this.menu._section = new PopupMenuSection();
-      this.menu._section.actor.connect(
+      this.menu._section.actor.connectObject(
         "notify::height",
-        this._scheduleScrollbarPolicySync
+        this._scheduleScrollbarPolicySync,
+        this
       );
       if (this._scrollView.add_actor) {
         this._scrollView.add_actor(this.menu._section.actor);
@@ -107,10 +108,10 @@ export const DockerMenu = GObject.registerClass(
       }
       this.menu.box.add_child(this._scrollView);
 
-      this.menu.connect("open-state-changed", (_menu, open) => {
+      this.menu.connectObject("open-state-changed", (_menu, open) => {
         if (open) this._syncScrollViewMaxHeight();
         this._refreshMenu();
-      });
+      }, this);
 
       this.menu._section.addMenuItem(new PopupMenuItem(loading));
 
@@ -148,6 +149,10 @@ export const DockerMenu = GObject.registerClass(
         GLib.source_remove(this._scrollbarPolicyTimeoutId);
         this._scrollbarPolicyTimeoutId = null;
       }
+
+      this.settings.disconnectObject(this);
+      this.menu.disconnectObject(this);
+      this.menu._section?.actor?.disconnectObject(this);
       super.destroy();
     }
 
@@ -403,9 +408,10 @@ export const DockerMenu = GObject.registerClass(
             const scrollView = item.menu.actor;
             scrollView.set_mouse_scrolling(false);
             scrollView.set_overlay_scrollbars(true);
-            item.menu.connect(
+            item.menu.connectObject(
               "open-state-changed",
-              this._scheduleScrollbarPolicySync
+              this._scheduleScrollbarPolicySync,
+              this
             );
           }
           this.menu._section.addMenuItem(item);

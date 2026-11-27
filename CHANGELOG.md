@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. _(The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).)_
 
+## [38] - 2026-11-27
+
+### Changed
+
+- Use `connectObject()`/`disconnectObject()` for signal connections so handlers are tracked and cleaned up together.
+
 ## [37] - 2026-11-25
 
 ### Added

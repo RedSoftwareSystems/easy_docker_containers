@@ -17,8 +17,8 @@ export default class DockerContainersExtensionObject extends Extension {
       this._settings.get_int("panel-index"),
       PANEL_BOXES[this._settings.get_int("panel-box")]
     );
-    this._panelSettingsIds = ["changed::panel-box", "changed::panel-index"].map(
-      (signal) => this._settings.connect(signal, () => this._moveIndicator())
+    ["changed::panel-box", "changed::panel-index"].forEach((signal) =>
+      this._settings.connectObject(signal, () => this._moveIndicator(), this)
     );
   }
 
@@ -32,8 +32,7 @@ export default class DockerContainersExtensionObject extends Extension {
   }
 
   disable() {
-    this._panelSettingsIds.forEach((id) => this._settings.disconnect(id));
-    this._panelSettingsIds = null;
+    this._settings.disconnectObject(this);
     this._settings = null;
     this._indicator.clearLoop();
     this._indicator.destroy();

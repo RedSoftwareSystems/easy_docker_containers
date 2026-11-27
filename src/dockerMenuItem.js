@@ -17,8 +17,10 @@ export const DockerMenuItem = GObject.registerClass(
         this.insert_child_at_index(icon, 1);
       }
 
-      this.connect("activate", () =>
-        this._dockerAction(containerName, dockerCommand)
+      this.connectObject(
+        "activate",
+        () => this._dockerAction(containerName, dockerCommand),
+        this
       );
     }
     _dockerAction(containerName, dockerCommand) {
@@ -46,10 +48,10 @@ export const DevcontainerStartMenuItem = GObject.registerClass(
       if (icon) {
         this.insert_child_at_index(icon, 1);
       }
-      this.connect("activate", () => {
+      this.connectObject("activate", () => {
         closePopup?.();
         Docker.runDevcontainerUp(localFolder);
-      });
+      }, this);
     }
   }
 );
@@ -62,10 +64,10 @@ export const DevcontainerOpenInIDEMenuItem = GObject.registerClass(
       if (icon) {
         this.insert_child_at_index(icon, 1);
       }
-      this.connect("activate", () => {
+      this.connectObject("activate", () => {
         closePopup?.();
         Docker.runDevcontainerIDE(localFolder);
-      });
+      }, this);
     }
   }
 );
@@ -78,12 +80,12 @@ export const DevcontainerRecreateMenuItem = GObject.registerClass(
       if (icon) {
         this.insert_child_at_index(icon, 1);
       }
-      this.connect("activate", () => {
+      this.connectObject("activate", () => {
         // Intentionally do NOT close the popup: keeping the menu open lets
         // the synchronous listener call in runDevcontainerRecreate update
         // the spinner in place, so the user sees it immediately.
         Docker.runDevcontainerRecreate(localFolder);
-      });
+      }, this);
     }
   }
 );

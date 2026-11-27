@@ -91,10 +91,10 @@ export default class DockerContainersPreferences extends ExtensionPreferences {
       "selected",
       Gio.SettingsBindFlags.DEFAULT
     );
-    dropDown.connect("notify::selected-item", () => {
+    dropDown.connectObject("notify::selected-item", () => {
       const selectedItem = dropDown.selected;
       textBox.buffer.text = loggingOptions[loggingOptionsKeys[selectedItem]];
-    });
+    }, this);
     return dropDown;
   };
 

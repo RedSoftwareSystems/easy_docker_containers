@@ -66,10 +66,10 @@ export const DockerSubMenu = GObject.registerClass(
           menuIcon("docker-devcontainer-info-symbolic"),
           1
         );
-        localFolderItem.connect("activate", () => {
+        localFolderItem.connectObject("activate", () => {
           closePopup?.();
           Docker.openTerminalAtFolder(devcontainer.localFolder);
-        });
+        }, this);
         this.menu.addMenuItem(localFolderItem);
         this.menu.addMenuItem(new PopupSeparatorMenuItem());
 
@@ -81,8 +81,10 @@ export const DockerSubMenu = GObject.registerClass(
             this._enterRecreatingSolderState();
         };
         Docker.addRecreatingSolderStartListener(this._onRecreatingSolderStart);
-        this.connect("destroy", () =>
-          Docker.removeRecreatingSolderStartListener(this._onRecreatingSolderStart)
+        this.connectObject(
+          "destroy",
+          () => Docker.removeRecreatingSolderStartListener(this._onRecreatingSolderStart),
+          this
         );
       }
 
@@ -338,10 +340,10 @@ export const DockerSubMenu = GObject.registerClass(
         localFolderItem.insert_child_at_index(
           menuIcon("docker-devcontainer-info-symbolic"), 1
         );
-        localFolderItem.connect("activate", () => {
+        localFolderItem.connectObject("activate", () => {
           this._closePopup?.();
           Docker.openTerminalAtFolder(this._devcontainer.localFolder);
-        });
+        }, this);
         this.menu.addMenuItem(localFolderItem);
         this.menu.addMenuItem(new PopupSeparatorMenuItem());
       }
